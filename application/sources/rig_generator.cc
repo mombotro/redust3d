@@ -734,7 +734,7 @@ void RigGenerator::computeBranchSkinWeights(size_t fromBoneIndex,
         std::vector<size_t> newRemainVertexIndices;
         const auto& parentBone = (*m_resultBones)[currentBone.parent >= 0 ? currentBone.parent : (int)currentBoneIndex];
         auto currentDirection = (currentBone.tailPosition - currentBone.headPosition).normalized();
-        auto parentDirection = currentBone.parent <= 0 ? currentDirection : (parentBone.tailPosition - parentBone.headPosition).normalized();
+        auto parentDirection = currentBone.parent < 0 ? currentDirection : (parentBone.tailPosition - parentBone.headPosition).normalized();
         auto cutNormal = ((parentDirection + currentDirection) * kDirectionAverageScale).normalized();
         auto beginGradientLength = (float)parentBone.headRadius * kBeginGradientRadiusScale;
         auto endGradientLength = (float)parentBone.tailRadius * kEndGradientRadiusScale;
@@ -750,7 +750,8 @@ void RigGenerator::computeBranchSkinWeights(size_t fromBoneIndex,
                     projectedLength = 0;
                 if (projectedLength <= endGradientLength) {
                     auto factor = kJunctionBlendWeight * (1.0f - projectedLength / endGradientLength);
-                    (*m_resultWeights)[vertexIndex].addBone(previousBoneIndex, factor);
+                    if (previousBoneIndex >= 0)
+                        (*m_resultWeights)[vertexIndex].addBone(previousBoneIndex, factor);
                 }
                 newRemainVertexIndices.push_back(vertexIndex);
                 continue;
@@ -767,21 +768,25 @@ void RigGenerator::computeBranchSkinWeights(size_t fromBoneIndex,
             if (projectedLength < 0)
                 projectedLength = 0;
             if (projectedLength <= endGradientLength) {
-                (*m_resultWeights)[vertexIndex].addBone(previousBoneIndex, kJunctionBlendWeight + kJunctionBlendWeight * projectedLength / endGradientLength);
+                if (previousBoneIndex >= 0)
+                    (*m_resultWeights)[vertexIndex].addBone(previousBoneIndex, kJunctionBlendWeight + kJunctionBlendWeight * projectedLength / endGradientLength);
                 (*m_resultWeights)[vertexIndex].addBone((int)currentBoneIndex, kJunctionBlendWeight * (1.0f - projectedLength / endGradientLength));
                 continue;
             }
             if (projectedLength <= parentLength - beginGradientLength) {
-                (*m_resultWeights)[vertexIndex].addBone(previousBoneIndex, 1.0f);
+                if (previousBoneIndex >= 0)
+                    (*m_resultWeights)[vertexIndex].addBone(previousBoneIndex, 1.0f);
                 continue;
             }
             if (projectedLength <= parentLength) {
                 auto factor = kJunctionBlendWeight + kJunctionBlendWeight * (parentLength - projectedLength) / beginGradientLength;
-                (*m_resultWeights)[vertexIndex].addBone(previousBoneIndex, factor);
+                if (previousBoneIndex >= 0)
+                    (*m_resultWeights)[vertexIndex].addBone(previousBoneIndex, factor);
                 continue;
             }
             auto factor = kJunctionBlendWeight * (1.0f - (projectedLength - parentLength) / beginGradientLength);
-            (*m_resultWeights)[vertexIndex].addBone(previousBoneIndex, factor);
+            if (previousBoneIndex >= 0)
+                (*m_resultWeights)[vertexIndex].addBone(previousBoneIndex, factor);
             continue;
         }
         remainVertexIndices = newRemainVertexIndices;
