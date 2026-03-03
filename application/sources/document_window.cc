@@ -1147,7 +1147,9 @@ void DocumentWindow::exportFbxToFilename(const QString& filename)
         m_document->textureNormalImage,
         m_document->textureMetalnessImage,
         m_document->textureRoughnessImage,
-        m_document->textureAmbientOcclusionImage);
+        m_document->textureAmbientOcclusionImage,
+        m_document->rigBones,
+        m_document->rigWeights);
     fbxFileWriter.save();
     QApplication::restoreOverrideCursor();
 }

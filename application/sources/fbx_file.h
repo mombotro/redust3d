@@ -8,6 +8,7 @@
 #include <QQuaternion>
 #include <QString>
 #include <dust3d/base/object.h>
+#include <dust3d/base/rig_bone.h>
 #include <map>
 
 class FbxFileWriter : public QObject {
@@ -19,7 +20,9 @@ public:
         QImage* normalImage = nullptr,
         QImage* metalnessImage = nullptr,
         QImage* roughnessImage = nullptr,
-        QImage* ambientOcclusionImage = nullptr);
+        QImage* ambientOcclusionImage = nullptr,
+        const std::vector<dust3d::RiggerBone>* rigBones = nullptr,
+        const std::map<int, dust3d::RiggerVertexWeights>* rigWeights = nullptr);
     bool save();
 
 private:
@@ -48,6 +51,8 @@ private:
     fbx::FBXDocument m_fbxDocument;
     std::map<QString, int64_t> m_uuidTo64Map;
     static std::vector<double> m_identityMatrix;
+    const std::vector<dust3d::RiggerBone>* m_rigBones = nullptr;
+    const std::map<int, dust3d::RiggerVertexWeights>* m_rigWeights = nullptr;
 };
 
 #endif
