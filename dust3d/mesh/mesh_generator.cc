@@ -501,6 +501,7 @@ std::unique_ptr<MeshState> MeshGenerator::combineStitchingMesh(const std::string
             {
                 ObjectNode node;
                 node.nodeId = meshNode.sourceId;
+                node.partId = Uuid(partIdString);
                 node.origin = meshNode.origin;
                 node.radius = static_cast<float>(meshNode.radius);
                 node.color = color;
@@ -698,6 +699,7 @@ std::unique_ptr<MeshState> MeshGenerator::combinePartMesh(const std::string& par
         {
             ObjectNode node;
             node.nodeId = meshNode.sourceId;
+            node.partId = Uuid(partIdString);
             node.origin = meshNode.origin;
             node.radius = static_cast<float>(meshNode.radius);
             node.color = color;
