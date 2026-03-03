@@ -49,7 +49,7 @@ enum class BoneSide {
     Right
 };
 
-const std::string kRootBoneName = "Body";
+constexpr char kRootBoneName[] = "Body";
 
 struct RiggerBone {
     std::string name;
