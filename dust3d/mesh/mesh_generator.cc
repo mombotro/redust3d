@@ -20,6 +20,7 @@
  *  SOFTWARE.
  */
 
+#include <dust3d/base/bone_mark.h>
 #include <dust3d/base/cut_face.h>
 #include <dust3d/base/part_target.h>
 #include <dust3d/base/snapshot_xml.h>
@@ -1259,6 +1260,60 @@ void MeshGenerator::addComponentPreview(const Uuid& componentId, ComponentPrevie
     m_generatedComponentPreviews[componentId] = std::move(preview);
 }
 
+void MeshGenerator::applyBoneMarksToNodeMap()
+{
+    for (const auto& nodeKv : m_snapshot->nodes) {
+        const auto& attrs = nodeKv.second;
+        auto boneMarkIt = attrs.find("boneMark");
+        if (boneMarkIt == attrs.end())
+            continue;
+        BoneMark mark = BoneMarkFromString(boneMarkIt->second.c_str());
+        if (mark == BoneMark::None)
+            continue;
+        Uuid nodeId(nodeKv.first);
+        auto nodeIt = m_object->nodeMap.find(nodeId);
+        if (nodeIt == m_object->nodeMap.end())
+            continue;
+        nodeIt->second.boneMark = mark;
+    }
+}
+
+void MeshGenerator::populateBodyEdges()
+{
+    m_object->bodyEdges.clear();
+    for (const auto& edgeKv : m_snapshot->edges) {
+        const auto& attrs = edgeKv.second;
+        auto fromIt = attrs.find("from");
+        auto toIt = attrs.find("to");
+        if (fromIt == attrs.end() || toIt == attrs.end())
+            continue;
+        Uuid fromId(fromIt->second);
+        Uuid toId(toIt->second);
+        if (m_object->nodeMap.find(fromId) == m_object->nodeMap.end())
+            continue;
+        if (m_object->nodeMap.find(toId) == m_object->nodeMap.end())
+            continue;
+        m_object->bodyEdges.push_back({ fromId, toId });
+    }
+}
+
+void MeshGenerator::populateTriangleSourceNodes()
+{
+    std::vector<std::pair<Uuid, Uuid>> sourceNodes;
+    sourceNodes.reserve(m_object->triangles.size());
+    for (const auto& tri : m_object->triangles) {
+        Uuid nodeId;
+        if (!tri.empty()) {
+            auto it = m_object->positionToNodeIdMap.find(
+                PositionKey(m_object->vertices[tri[0]]));
+            if (it != m_object->positionToNodeIdMap.end())
+                nodeId = it->second;
+        }
+        sourceNodes.push_back({ nodeId, nodeId });
+    }
+    m_object->setTriangleSourceNodes(sourceNodes);
+}
+
 void MeshGenerator::generate()
 {
     if (nullptr == m_snapshot)
@@ -1349,6 +1404,10 @@ void MeshGenerator::generate()
     // Recursively check uncombined components
     collectUncombinedComponent(to_string(Uuid()));
     collectBrokenTriangles(to_string(Uuid()));
+
+    applyBoneMarksToNodeMap();
+    populateBodyEdges();
+    populateTriangleSourceNodes();
 
     postprocessObject(m_object);
 

@@ -182,6 +182,10 @@ private:
     void addComponentPreview(const Uuid& componentId, ComponentPreview&& preview);
     bool fetchPartOrderedNodes(const std::string& partIdString, std::vector<MeshNode>* meshNodes, bool* isCircle);
 
+    void applyBoneMarksToNodeMap();
+    void populateBodyEdges();
+    void populateTriangleSourceNodes();
+
     static void chamferFace(std::vector<Vector2>* face);
     static void subdivideFace(std::vector<Vector2>* face);
     static void flattenLinks(const std::unordered_map<size_t, size_t>& links,
