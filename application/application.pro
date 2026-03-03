@@ -242,6 +242,7 @@ HEADERS += ../dust3d/base/position_key.h
 SOURCES += ../dust3d/base/position_key.cc
 HEADERS += ../dust3d/base/quaternion.h
 HEADERS += ../dust3d/base/rectangle.h
+HEADERS += ../dust3d/base/rig_bone.h
 HEADERS += ../dust3d/base/rig_type.h
 SOURCES += ../dust3d/base/rig_type.cc
 HEADERS += ../dust3d/base/snapshot.h
