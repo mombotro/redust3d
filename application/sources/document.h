@@ -528,6 +528,7 @@ private:
     dust3d::Uuid m_currentCanvasComponentId;
     bool m_allPositionRelatedLocksEnabled = true;
     QThread* m_rigGeneratorThread = nullptr;
+    bool m_isRigObsolete = false;
 
 private:
     static unsigned long m_maxSnapshot;

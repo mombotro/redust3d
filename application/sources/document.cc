@@ -2311,8 +2311,13 @@ void Document::meshReady()
 
     emit resultMeshChanged();
 
-    if (dust3d::RigType::None != rigType)
-        regenerateRig();
+    if (dust3d::RigType::None != rigType) {
+        if (m_rigGeneratorThread) {
+            m_isRigObsolete = true;
+        } else {
+            regenerateRig();
+        }
+    }
 
     if (m_isResultMeshObsolete) {
         generateMesh();
@@ -2981,8 +2986,9 @@ void Document::setRigType(dust3d::RigType type)
     if (rigType == type)
         return;
     rigType = type;
+    if (m_rigGeneratorThread)
+        m_isRigObsolete = true;
     regenerateRig();
-    emit rigChanged();
     emit optionsChanged();
 }
 
@@ -3005,8 +3011,8 @@ void Document::regenerateRig()
     connect(thread, &QThread::started, generator, &RigGenerator::process);
     connect(generator, &RigGenerator::finished, this, &Document::rigReady);
     connect(generator, &RigGenerator::finished, thread, &QThread::quit);
-    connect(thread, &QThread::finished, thread, &QThread::deleteLater);
     connect(thread, &QThread::finished, generator, &RigGenerator::deleteLater);
+    connect(thread, &QThread::finished, thread, &QThread::deleteLater);
     m_rigGeneratorThread = thread;
     thread->start();
 }
@@ -3017,10 +3023,18 @@ void Document::rigReady()
     m_rigGeneratorThread = nullptr;
     delete rigBones;
     delete rigWeights;
-    rigBones = generator->takeResultBones();
-    rigWeights = generator->takeResultWeights();
-    isRigValid = generator->isSuccessful();
+    if (m_isRigObsolete || dust3d::RigType::None == rigType) {
+        rigBones = nullptr;
+        rigWeights = nullptr;
+        isRigValid = false;
+    } else {
+        rigBones = generator->takeResultBones();
+        rigWeights = generator->takeResultWeights();
+        isRigValid = generator->isSuccessful();
+    }
     emit rigChanged();
-    // If rigType changed while we were generating, re-run
-    regenerateRig();
+    if (m_isRigObsolete) {
+        m_isRigObsolete = false;
+        regenerateRig();
+    }
 }
