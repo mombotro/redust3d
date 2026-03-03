@@ -24,7 +24,9 @@ static const float kDirectionAverageScale = 0.5f;
 // Helper: angle in radians between two vectors.
 static float radianBetweenVectors(const dust3d::Vector3& first, const dust3d::Vector3& second)
 {
-    return (float)std::acos(dust3d::Vector3::dotProduct(first.normalized(), second.normalized()));
+    double cosA = dust3d::Vector3::dotProduct(first.normalized(), second.normalized());
+    cosA = std::max(-1.0, std::min(1.0, cosA));
+    return (float)std::acos(cosA);
 }
 
 // Helper: bone mark color (approximates RC6 BoneMarkToColor).
@@ -981,11 +983,13 @@ void RigGenerator::removeBranchsFromNodes(const std::vector<std::vector<size_t>>
             branchSet.insert(nodeIndex);
         }
     }
+    std::vector<size_t> filtered;
+    filtered.reserve(resultNodes->size());
     for (const auto& nodeIndex : *resultNodes) {
-        if (branchSet.find(nodeIndex) == branchSet.end()) {
-            resultNodes->push_back(nodeIndex);
-        }
+        if (branchSet.find(nodeIndex) == branchSet.end())
+            filtered.push_back(nodeIndex);
     }
+    *resultNodes = std::move(filtered);
 }
 
 void RigGenerator::generate()
