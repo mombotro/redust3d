@@ -24,6 +24,7 @@
 #define DUST3D_BASE_OBJECT_H_
 
 #include <array>
+#include <dust3d/base/bone_mark.h>
 #include <dust3d/base/color.h>
 #include <dust3d/base/position_key.h>
 #include <dust3d/base/rectangle.h>
@@ -38,12 +39,13 @@
 namespace dust3d {
 
 struct ObjectNode {
-    //Uuid partId;
-    //Uuid nodeId;
+    Uuid partId;
+    Uuid nodeId;
     Vector3 origin;
-    //float radius = 0.0;
+    float radius = 0.0f;
     Color color;
-    float smoothCutoffDegrees = 0.0;
+    float smoothCutoffDegrees = 0.0f;
+    BoneMark boneMark = BoneMark::None;
     //float metalness = 0.0;
     //float roughness = 1.0;
     //Uuid materialId;
@@ -58,6 +60,7 @@ public:
     std::vector<Vector3> vertices;
     std::map<PositionKey, Uuid> positionToNodeIdMap;
     std::map<Uuid, ObjectNode> nodeMap;
+    std::vector<std::pair<Uuid, Uuid>> bodyEdges;
     std::vector<std::vector<size_t>> triangleAndQuads;
     std::vector<std::vector<size_t>> triangles;
     std::unordered_map<Uuid, std::map<std::array<PositionKey, 3>, std::array<Vector2, 3>>> componentTriangleUvs;

@@ -498,8 +498,15 @@ std::unique_ptr<MeshState> MeshGenerator::combineStitchingMesh(const std::string
         if (orderedBuilderNodes.size() < 2)
             continue;
         for (const auto& meshNode : orderedBuilderNodes) {
-            componentCache.nodeMap.emplace(std::make_pair(meshNode.sourceId,
-                ObjectNode { meshNode.origin, color, smoothCutoffDegrees }));
+            {
+                ObjectNode node;
+                node.nodeId = meshNode.sourceId;
+                node.origin = meshNode.origin;
+                node.radius = static_cast<float>(meshNode.radius);
+                node.color = color;
+                node.smoothCutoffDegrees = smoothCutoffDegrees;
+                componentCache.nodeMap.emplace(meshNode.sourceId, std::move(node));
+            }
         }
         splines.emplace_back(StitchMeshBuilder::Spline {
             std::move(orderedBuilderNodes),
@@ -688,8 +695,15 @@ std::unique_ptr<MeshState> MeshGenerator::combinePartMesh(const std::string& par
 
     partCache.nodeMap.clear();
     for (const auto& meshNode : meshNodes) {
-        partCache.nodeMap.emplace(std::make_pair(meshNode.sourceId,
-            ObjectNode { meshNode.origin, color, smoothCutoffDegrees }));
+        {
+            ObjectNode node;
+            node.nodeId = meshNode.sourceId;
+            node.origin = meshNode.origin;
+            node.radius = static_cast<float>(meshNode.radius);
+            node.color = color;
+            node.smoothCutoffDegrees = smoothCutoffDegrees;
+            partCache.nodeMap.emplace(meshNode.sourceId, std::move(node));
+        }
     }
 
     if (PartTarget::Model == target) {
