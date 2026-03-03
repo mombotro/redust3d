@@ -1614,6 +1614,23 @@ void Document::setNodeCutFaceLinkedId(dust3d::Uuid nodeId, dust3d::Uuid linkedId
     emit skeletonChanged();
 }
 
+void Document::setNodeBoneMark(dust3d::Uuid nodeId, dust3d::BoneMark mark)
+{
+    auto node = nodeMap.find(nodeId);
+    if (node == nodeMap.end()) {
+        qDebug() << "Node" << nodeId.toString().c_str() << "not found";
+        return;
+    }
+    if (node->second.boneMark == mark)
+        return;
+    node->second.boneMark = mark;
+    auto part = partMap.find(node->second.partId);
+    if (part != partMap.end())
+        part->second.dirty = true;
+    emit nodeBoneMarkChanged(nodeId);
+    emit skeletonChanged();
+}
+
 void Document::clearNodeCutFaceSettings(dust3d::Uuid nodeId)
 {
     auto node = nodeMap.find(nodeId);
@@ -1786,6 +1803,8 @@ void Document::toSnapshot(dust3d::Snapshot* snapshot, const std::set<dust3d::Uui
                     node["cutFace"] = CutFaceToString(nodeIt.second.cutFace);
                 }
             }
+            if (nodeIt.second.boneMark != dust3d::BoneMark::None)
+                node["boneMark"] = dust3d::BoneMarkToString(nodeIt.second.boneMark);
             if (!nodeIt.second.name.isEmpty())
                 node["name"] = nodeIt.second.name.toUtf8().constData();
             snapshot->nodes[node["id"]] = node;
@@ -1983,6 +2002,9 @@ void Document::addFromSnapshot(const dust3d::Snapshot& snapshot, enum SnapshotSo
                 }
             }
         }
+        const auto& boneMarkIt = nodeKv.second.find("boneMark");
+        if (boneMarkIt != nodeKv.second.end())
+            node.boneMark = dust3d::BoneMarkFromString(boneMarkIt->second.c_str());
         nodeMap[node.id] = node;
         newAddedNodeIds.insert(node.id);
     }

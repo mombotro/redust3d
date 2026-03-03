@@ -11,6 +11,7 @@
 #include <algorithm>
 #include <cmath>
 #include <deque>
+#include <dust3d/base/bone_mark.h>
 #include <dust3d/base/combine_mode.h>
 #include <dust3d/base/cut_face.h>
 #include <dust3d/base/part_target.h>
@@ -75,6 +76,7 @@ public:
         dust3d::CutFace cutFace = dust3d::CutFace::Quad;
         dust3d::Uuid cutFaceLinkedId;
         bool hasCutFaceSettings = false;
+        dust3d::BoneMark boneMark = dust3d::BoneMark::None;
         std::vector<dust3d::Uuid> edgeIds;
 
     private:
@@ -184,6 +186,7 @@ public:
 signals:
     void nodeCutRotationChanged(dust3d::Uuid nodeId);
     void nodeCutFaceChanged(dust3d::Uuid nodeId);
+    void nodeBoneMarkChanged(dust3d::Uuid nodeId);
     void partPreviewChanged(dust3d::Uuid partId);
     void resultMeshChanged();
     void resultComponentPreviewMeshesChanged();
@@ -386,6 +389,7 @@ public slots:
     void setNodeCutFace(dust3d::Uuid nodeId, dust3d::CutFace cutFace);
     void setNodeCutFaceLinkedId(dust3d::Uuid nodeId, dust3d::Uuid linkedId);
     void clearNodeCutFaceSettings(dust3d::Uuid nodeId);
+    void setNodeBoneMark(dust3d::Uuid nodeId, dust3d::BoneMark mark);
     void setEditMode(EditMode mode);
     void uiReady();
     void generateMesh();
