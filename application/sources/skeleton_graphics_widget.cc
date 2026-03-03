@@ -4,6 +4,7 @@
 #include "skeleton_graphics_origin_item.h"
 #include "skeleton_graphics_selection_item.h"
 #include "theme.h"
+#include <dust3d/base/bone_mark.h>
 #include <QApplication>
 #include <QBitmap>
 #include <QDebug>
@@ -262,6 +263,31 @@ void SkeletonGraphicsWidget::showContextMenu(const QPoint& pos)
 
         connect(colorizeAsAutoColorAction, &QAction::triggered, this, &SkeletonGraphicsWidget::colorizeSelected);
         subMenu->addAction(colorizeAsAutoColorAction);
+    }
+
+    if (isSingleNodeSelected()) {
+        dust3d::Uuid nodeId = singleSelectedNodeId();
+        if (!nodeId.isNull()) {
+            QMenu* boneMarkSubMenu = m_contextMenu->addMenu(tr("Bone Mark"));
+            static const struct {
+                const char* label;
+                dust3d::BoneMark mark;
+            } kBoneMarks[] = {
+                { "None",  dust3d::BoneMark::None  },
+                { "Neck",  dust3d::BoneMark::Neck  },
+                { "Limb",  dust3d::BoneMark::Limb  },
+                { "Tail",  dust3d::BoneMark::Tail  },
+                { "Joint", dust3d::BoneMark::Joint },
+            };
+            for (const auto& m : kBoneMarks) {
+                QAction* act = new QAction(tr(m.label), boneMarkSubMenu);
+                dust3d::BoneMark bm = m.mark;
+                connect(act, &QAction::triggered, [=]() {
+                    emit setNodeBoneMarkRequested(nodeId, bm);
+                });
+                boneMarkSubMenu->addAction(act);
+            }
+        }
     }
 
     QAction* selectAllAction = new QAction(tr("Select All"), m_contextMenu.get());
@@ -2725,6 +2751,17 @@ bool SkeletonGraphicsWidget::isSingleNodeSelected()
     const auto& it = m_rangeSelectionSet.begin();
     QGraphicsItem* item = *it;
     return item->data(0) == "node";
+}
+
+dust3d::Uuid SkeletonGraphicsWidget::singleSelectedNodeId() const
+{
+    for (const auto& item : m_rangeSelectionSet) {
+        if (item->data(0) == "node") {
+            SkeletonGraphicsNodeItem* nodeItem = static_cast<SkeletonGraphicsNodeItem*>(item);
+            return nodeItem->id();
+        }
+    }
+    return dust3d::Uuid();
 }
 
 void SkeletonGraphicsWidget::hoverPart(dust3d::Uuid partId)

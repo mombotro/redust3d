@@ -6,6 +6,7 @@
 #include "skeleton_ik_mover.h"
 #include "theme.h"
 #include "turnaround_loader.h"
+#include <dust3d/base/bone_mark.h>
 #include <QGraphicsPixmapItem>
 #include <QGraphicsView>
 #include <QKeyEvent>
@@ -75,6 +76,7 @@ signals:
     void shortcutToggleRotation();
     void loadedTurnaroundImageChanged();
     void nodePicked(const dust3d::Uuid& nodeId);
+    void setNodeBoneMarkRequested(dust3d::Uuid nodeId, dust3d::BoneMark mark);
 
 public:
     SkeletonGraphicsWidget(const Document* document);
@@ -224,6 +226,7 @@ private:
     void removeItem(QGraphicsItem* item);
     QVector2D centerOfNodeItemSet(const std::set<SkeletonGraphicsNodeItem*>& set);
     bool isSingleNodeSelected();
+    dust3d::Uuid singleSelectedNodeId() const;
     void addItemToRangeSelection(QGraphicsItem* item);
     void removeItemFromRangeSelection(QGraphicsItem* item);
     void hoverPart(dust3d::Uuid partId);
