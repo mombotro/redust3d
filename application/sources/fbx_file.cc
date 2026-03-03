@@ -2415,8 +2415,6 @@ FbxFileWriter::FbxFileWriter(dust3d::Object& object,
             for (const auto& item : *m_rigWeights) {
                 for (int i = 0; i < 4; ++i) {
                     const auto& boneIndex = item.second.boneIndices[i];
-                    if (boneIndex == 0 && i > 0)
-                        break;
                     if ((size_t)boneIndex >= bindPerBone.size())
                         continue;
                     if (item.second.boneWeights[i] <= 0.0f)
@@ -3745,13 +3743,12 @@ FbxFileWriter::FbxFileWriter(dust3d::Object& object,
             }
         }
     }
-    // LimbNode[i] -> deformerIds[i]: connects each LimbNode to its corresponding deformer
-    // (armature->skin for i=0, and each bone LimbNode -> its cluster for i>0)
-    for (size_t i = 0; i < limbNodeIds.size(); ++i) {
+    // Each Cluster (SubDeformer) points to its LimbNode (bone)
+    for (size_t i = 0; i < m_rigBones->size(); ++i) {
         FBXNode p("C");
         p.addProperty("OO");
-        p.addProperty(limbNodeIds[i]);
-        p.addProperty(deformerIds[i]);
+        p.addProperty(deformerIds[1 + i]);   // clusterId is source
+        p.addProperty(limbNodeIds[1 + i]);   // limbNodeId is destination
         connections.addChild(p);
     }
     for (size_t i = 0; i < nodeAttributeIds.size(); ++i) {
