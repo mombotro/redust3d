@@ -1,6 +1,7 @@
 #include "document.h"
 #include "image_forever.h"
 #include "mesh_generator.h"
+#include "rig_generator.h"
 #include "uv_map_generator.h"
 #include <QApplication>
 #include <QClipboard>
@@ -27,6 +28,8 @@ Document::~Document()
 {
     delete (dust3d::MeshGenerator::GeneratedCacheContext*)m_generatedCacheContext;
     delete m_resultMesh;
+    delete rigBones;
+    delete rigWeights;
     delete textureImage;
     delete textureImageByteArray;
     delete textureNormalImage;
@@ -1878,6 +1881,7 @@ void Document::toSnapshot(dust3d::Snapshot* snapshot, const std::set<dust3d::Uui
         canvas["originX"] = std::to_string(getOriginX());
         canvas["originY"] = std::to_string(getOriginY());
         canvas["originZ"] = std::to_string(getOriginZ());
+        canvas["rigType"] = dust3d::RigTypeToString(rigType);
         snapshot->canvas = canvas;
     }
 }
@@ -1894,6 +1898,11 @@ void Document::addFromSnapshot(const dust3d::Snapshot& snapshot, enum SnapshotSo
             setOriginY(dust3d::String::toFloat(originYit->second));
             setOriginZ(dust3d::String::toFloat(originZit->second));
             isOriginChanged = true;
+        }
+        {
+            auto it = snapshot.canvas.find("rigType");
+            if (it != snapshot.canvas.end())
+                rigType = dust3d::RigTypeFromString(it->second.c_str());
         }
     }
 
@@ -2301,6 +2310,9 @@ void Document::meshReady()
     qDebug() << "Mesh generation done";
 
     emit resultMeshChanged();
+
+    if (dust3d::RigType::None != rigType)
+        regenerateRig();
 
     if (m_isResultMeshObsolete) {
         generateMesh();
@@ -2962,4 +2974,53 @@ void Document::collectCutFaceList(std::vector<QString>& cutFaces) const
 
     for (const auto& it : cutFacePartIdList)
         cutFaces.push_back(QString(it.toString().c_str()));
+}
+
+void Document::setRigType(dust3d::RigType type)
+{
+    if (rigType == type)
+        return;
+    rigType = type;
+    regenerateRig();
+    emit rigChanged();
+    emit optionsChanged();
+}
+
+void Document::regenerateRig()
+{
+    if (m_rigGeneratorThread)
+        return;
+    if (dust3d::RigType::None == rigType || nullptr == m_currentObject) {
+        delete rigBones;
+        rigBones = nullptr;
+        delete rigWeights;
+        rigWeights = nullptr;
+        isRigValid = false;
+        emit rigChanged();
+        return;
+    }
+    QThread* thread = new QThread;
+    RigGenerator* generator = new RigGenerator(rigType, *m_currentObject);
+    generator->moveToThread(thread);
+    connect(thread, &QThread::started, generator, &RigGenerator::process);
+    connect(generator, &RigGenerator::finished, this, &Document::rigReady);
+    connect(generator, &RigGenerator::finished, thread, &QThread::quit);
+    connect(thread, &QThread::finished, thread, &QThread::deleteLater);
+    connect(thread, &QThread::finished, generator, &RigGenerator::deleteLater);
+    m_rigGeneratorThread = thread;
+    thread->start();
+}
+
+void Document::rigReady()
+{
+    RigGenerator* generator = qobject_cast<RigGenerator*>(sender());
+    m_rigGeneratorThread = nullptr;
+    delete rigBones;
+    delete rigWeights;
+    rigBones = generator->takeResultBones();
+    rigWeights = generator->takeResultWeights();
+    isRigValid = generator->isSuccessful();
+    emit rigChanged();
+    // If rigType changed while we were generating, re-run
+    regenerateRig();
 }

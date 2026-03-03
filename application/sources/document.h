@@ -15,6 +15,8 @@
 #include <dust3d/base/combine_mode.h>
 #include <dust3d/base/cut_face.h>
 #include <dust3d/base/part_target.h>
+#include <dust3d/base/rig_bone.h>
+#include <dust3d/base/rig_type.h>
 #include <dust3d/base/snapshot.h>
 #include <dust3d/base/texture_type.h>
 #include <dust3d/base/uuid.h>
@@ -24,6 +26,7 @@
 
 class UvMapGenerator;
 class MeshGenerator;
+class RigGenerator;
 
 class Document : public QObject {
     Q_OBJECT
@@ -256,6 +259,7 @@ signals:
     void ylockStateChanged();
     void zlockStateChanged();
     void radiusLockStateChanged();
+    void rigChanged();
 
 public: // need initialize
     QImage* textureImage = nullptr;
@@ -268,6 +272,10 @@ public: // need initialize
     QByteArray* textureRoughnessImageByteArray = nullptr;
     QImage* textureAmbientOcclusionImage = nullptr;
     QByteArray* textureAmbientOcclusionImageByteArray = nullptr;
+    dust3d::RigType rigType = dust3d::RigType::None;
+    std::vector<dust3d::RiggerBone>* rigBones = nullptr;
+    std::map<int, dust3d::RiggerVertexWeights>* rigWeights = nullptr;
+    bool isRigValid = false;
     bool weldEnabled = true;
     float brushMetalness = ModelMesh::m_defaultMetalness;
     float brushRoughness = ModelMesh::m_defaultRoughness;
@@ -390,6 +398,7 @@ public slots:
     void setNodeCutFaceLinkedId(dust3d::Uuid nodeId, dust3d::Uuid linkedId);
     void clearNodeCutFaceSettings(dust3d::Uuid nodeId);
     void setNodeBoneMark(dust3d::Uuid nodeId, dust3d::BoneMark mark);
+    void setRigType(dust3d::RigType type);
     void setEditMode(EditMode mode);
     void uiReady();
     void generateMesh();
@@ -493,6 +502,8 @@ private:
     void removeComponentRecursively(dust3d::Uuid componentId);
     void updateLinkedPart(dust3d::Uuid oldPartId, dust3d::Uuid newPartId);
     dust3d::Uuid createNode(dust3d::Uuid nodeId, float x, float y, float z, float radius, dust3d::Uuid fromNodeId);
+    void regenerateRig();
+    void rigReady();
 
     bool m_isResultMeshObsolete = false;
     MeshGenerator* m_meshGenerator = nullptr;
@@ -516,6 +527,7 @@ private:
     float m_originZ = 0;
     dust3d::Uuid m_currentCanvasComponentId;
     bool m_allPositionRelatedLocksEnabled = true;
+    QThread* m_rigGeneratorThread = nullptr;
 
 private:
     static unsigned long m_maxSnapshot;
