@@ -72,10 +72,13 @@ SkeletonGraphicsWidget::SkeletonGraphicsWidget(const Document* document)
         if (!node)
             return;
         auto color = dust3d::BoneMarkToColor(node->boneMark);
-        QColor qcolor(color.r() * 255, color.g() * 255, color.b() * 255);
-        bool hasMark = node->boneMark != dust3d::BoneMark::None;
-        it->second.first->setMarkColor(hasMark ? qcolor : Qt::transparent);
-        it->second.second->setMarkColor(hasMark ? qcolor : Qt::transparent);
+        QColor qcolor(
+            (int)(color.r() * 255),
+            (int)(color.g() * 255),
+            (int)(color.b() * 255),
+            (int)(color.alpha() * 255));
+        it->second.first->setMarkColor(qcolor);
+        it->second.second->setMarkColor(qcolor);
     });
 }
 
@@ -2060,9 +2063,13 @@ void SkeletonGraphicsWidget::nodeAdded(dust3d::Uuid nodeId)
     scene()->addItem(sideProfileItem);
     nodeItemMap[nodeId] = std::make_pair(mainProfileItem, sideProfileItem);
 
-    if (node->boneMark != dust3d::BoneMark::None) {
+    {
         auto color = dust3d::BoneMarkToColor(node->boneMark);
-        QColor qcolor(color.r() * 255, color.g() * 255, color.b() * 255);
+        QColor qcolor(
+            (int)(color.r() * 255),
+            (int)(color.g() * 255),
+            (int)(color.b() * 255),
+            (int)(color.alpha() * 255));
         mainProfileItem->setMarkColor(qcolor);
         sideProfileItem->setMarkColor(qcolor);
     }

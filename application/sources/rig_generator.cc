@@ -29,23 +29,6 @@ static float radianBetweenVectors(const dust3d::Vector3& first, const dust3d::Ve
     return (float)std::acos(cosA);
 }
 
-// Helper: bone mark color (approximates RC6 BoneMarkToColor).
-static dust3d::Color boneMarkToColor(dust3d::BoneMark mark)
-{
-    switch (mark) {
-    case dust3d::BoneMark::Neck:
-        return dust3d::Color(0xfd / 255.0, 0x64 / 255.0, 0x61 / 255.0);
-    case dust3d::BoneMark::Limb:
-        return dust3d::Color(0x55 / 255.0, 0xad / 255.0, 0xff / 255.0);
-    case dust3d::BoneMark::Tail:
-        return dust3d::Color(0x4c / 255.0, 0xaf / 255.0, 0x50 / 255.0);
-    case dust3d::BoneMark::Joint:
-        return dust3d::Color(0xff / 255.0, 0xe0 / 255.0, 0x82 / 255.0);
-    default:
-        return dust3d::Color(1.0, 1.0, 1.0);
-    }
-}
-
 static dust3d::Color colorWhite()
 {
     return dust3d::Color(1.0, 1.0, 1.0);
@@ -408,7 +391,7 @@ void RigGenerator::buildSkeleton()
         bone.tailPosition = nextNode.origin;
         bone.headRadius = currentNode.radius;
         bone.tailRadius = nextNode.radius;
-        bone.color = 0 == (spineJointIndex - rootSpineJointIndex) % 2 ? colorWhite() : boneMarkToColor(dust3d::BoneMark::Joint);
+        bone.color = 0 == (spineJointIndex - rootSpineJointIndex) % 2 ? colorWhite() : dust3d::BoneMarkToColor(dust3d::BoneMark::Joint);
         bone.name = std::string("Spine") + std::to_string(spineJointIndex + 1 - rootSpineJointIndex);
         bone.role = dust3d::BoneRole::Spine;
         bone.index = (int)m_resultBones->size();
@@ -456,7 +439,7 @@ void RigGenerator::buildSkeleton()
             bone.tailPosition = nextNode.origin;
             bone.headRadius = currentNode.radius;
             bone.tailRadius = nextNode.radius;
-            bone.color = 0 == limbJointIndex % 2 ? boneMarkToColor(dust3d::BoneMark::Limb) : boneMarkToColor(dust3d::BoneMark::Joint);
+            bone.color = 0 == limbJointIndex % 2 ? dust3d::BoneMarkToColor(dust3d::BoneMark::Limb) : dust3d::BoneMarkToColor(dust3d::BoneMark::Joint);
             bone.name = chainName + std::string("_Joint") + std::to_string(limbJointIndex + 1);
             bone.role = dust3d::BoneRole::Limb;
             bone.side = (chainPrefix.rfind("Left", 0) == 0) ? dust3d::BoneSide::Left : dust3d::BoneSide::Right;
@@ -496,7 +479,7 @@ void RigGenerator::buildSkeleton()
             bone.tailPosition = nextNode.origin;
             bone.headRadius = currentNode.radius;
             bone.tailRadius = nextNode.radius;
-            bone.color = 0 == neckJointIndex % 2 ? boneMarkToColor(dust3d::BoneMark::Neck) : boneMarkToColor(dust3d::BoneMark::Joint);
+            bone.color = 0 == neckJointIndex % 2 ? dust3d::BoneMarkToColor(dust3d::BoneMark::Neck) : dust3d::BoneMarkToColor(dust3d::BoneMark::Joint);
             bone.name = std::string("Neck_Joint") + std::to_string(neckJointIndex + 1);
             bone.role = dust3d::BoneRole::Neck;
             bone.index = (int)m_resultBones->size();
@@ -527,7 +510,7 @@ void RigGenerator::buildSkeleton()
             bone.tailPosition = nextNode.origin;
             bone.headRadius = currentNode.radius;
             bone.tailRadius = nextNode.radius;
-            bone.color = 0 == ((int)rootSpineJointIndex - spineJointIndex) % 2 ? boneMarkToColor(dust3d::BoneMark::Joint) : colorWhite();
+            bone.color = 0 == ((int)rootSpineJointIndex - spineJointIndex) % 2 ? dust3d::BoneMarkToColor(dust3d::BoneMark::Joint) : colorWhite();
             bone.name = std::string("Spine0") + std::to_string((int)rootSpineJointIndex - spineJointIndex + 1);
             bone.role = dust3d::BoneRole::SpineReverse;
             bone.index = (int)m_resultBones->size();
@@ -554,7 +537,7 @@ void RigGenerator::buildSkeleton()
             bone.tailPosition = nextNode.origin;
             bone.headRadius = currentNode.radius;
             bone.tailRadius = nextNode.radius;
-            bone.color = 0 == tailJointIndex % 2 ? boneMarkToColor(dust3d::BoneMark::Tail) : boneMarkToColor(dust3d::BoneMark::Joint);
+            bone.color = 0 == tailJointIndex % 2 ? dust3d::BoneMarkToColor(dust3d::BoneMark::Tail) : dust3d::BoneMarkToColor(dust3d::BoneMark::Joint);
             bone.name = std::string("Tail_Joint") + std::to_string(tailJointIndex + 1);
             bone.role = dust3d::BoneRole::Tail;
             bone.index = (int)m_resultBones->size();
