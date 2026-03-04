@@ -108,6 +108,8 @@ public:
         bool subdived;
         bool disabled;
         bool xMirrored;
+        bool yMirrored = false;
+        bool zMirrored = false;
         float deformThickness;
         float deformWidth;
         bool deformUnified;
@@ -202,6 +204,8 @@ signals:
     void resultTextureChanged();
     void partSubdivStateChanged(dust3d::Uuid partId);
     void partXmirrorStateChanged(dust3d::Uuid partId);
+    void partYmirrorStateChanged(dust3d::Uuid partId);
+    void partZmirrorStateChanged(dust3d::Uuid partId);
     void partDeformThicknessChanged(dust3d::Uuid partId);
     void partDeformWidthChanged(dust3d::Uuid partId);
     void partDeformUnifyStateChanged(dust3d::Uuid partId);
@@ -415,6 +419,8 @@ public slots:
     void textureReady();
     void setPartSubdivState(dust3d::Uuid partId, bool subdived);
     void setPartXmirrorState(dust3d::Uuid partId, bool mirrored);
+    void setPartYmirrorState(dust3d::Uuid partId, bool mirrored);
+    void setPartZmirrorState(dust3d::Uuid partId, bool mirrored);
     void setPartDeformThickness(dust3d::Uuid partId, float thickness);
     void setPartDeformWidth(dust3d::Uuid partId, float width);
     void setPartDeformUnified(dust3d::Uuid partId, bool unified);

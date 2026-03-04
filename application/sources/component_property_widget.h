@@ -32,6 +32,8 @@ signals:
     void setPartCutFace(const dust3d::Uuid& partId, dust3d::CutFace cutFace);
     void setPartCutFaceLinkedId(const dust3d::Uuid& partId, dust3d::Uuid linkedId);
     void setPartXmirrorState(dust3d::Uuid partId, bool mirrored);
+    void setPartYmirrorState(dust3d::Uuid partId, bool mirrored);
+    void setPartZmirrorState(dust3d::Uuid partId, bool mirrored);
     void setComponentCombineMode(dust3d::Uuid componentId, dust3d::CombineMode combineMode);
     void setPartBoneMark(const dust3d::Uuid& partId, dust3d::BoneMark mark);
     void setPartIkState(const dust3d::Uuid& partId, bool enabled, float minDegrees, float maxDegrees);

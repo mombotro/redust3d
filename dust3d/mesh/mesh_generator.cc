@@ -731,6 +731,20 @@ std::unique_ptr<MeshState> MeshGenerator::combinePartMesh(const std::string& par
             for (auto& it : partCache.faces)
                 std::reverse(it.begin(), it.end());
         }
+        const auto& yMirrorFromPartId = String::valueOrEmpty(part, "__yMirrorFromPartId");
+        if (!yMirrorFromPartId.empty()) {
+            for (auto& it : partCache.vertices)
+                it.setY(-it.y());
+            for (auto& it : partCache.faces)
+                std::reverse(it.begin(), it.end());
+        }
+        const auto& zMirrorFromPartId = String::valueOrEmpty(part, "__zMirrorFromPartId");
+        if (!zMirrorFromPartId.empty()) {
+            for (auto& it : partCache.vertices)
+                it.setZ(-it.z());
+            for (auto& it : partCache.faces)
+                std::reverse(it.begin(), it.end());
+        }
         const auto& faceUvs = tubeMeshBuilder->generatedFaceUvs();
         for (size_t i = 0; i < faceUvs.size(); ++i) {
             const auto& uv = faceUvs[i];
@@ -1210,6 +1224,70 @@ void MeshGenerator::preprocessMirror()
     for (const auto& it : partOldToNewMap)
         m_snapshot->parts[it.second]["__mirroredByPartId"] = it.first;
 
+    // Y/Z-mirror: generate unique valid UUIDs by flipping hex nibbles in the reversed UUID
+    // flipHexNibble XORs a hex char with 8 in hex-digit space, keeping it valid hex
+    auto flipHexNibble = [](char c) -> char {
+        if (c >= '0' && c <= '9') return '0' + ((c - '0') ^ 8);
+        if (c >= 'a' && c <= 'f') return 'a' + ((c - 'a') ^ 8);
+        if (c >= 'A' && c <= 'F') return 'A' + ((c - 'A') ^ 8);
+        return c;
+    };
+    // makeYMirrorId: flip nibble at position 1 (first hex char after '{')
+    auto makeYMirrorId = [&flipHexNibble](const std::string& reversedId) -> std::string {
+        std::string id = reversedId;
+        if (id.size() >= 2)
+            id[1] = flipHexNibble(id[1]);
+        return id;
+    };
+    // makeZMirrorId: flip nibble at position 2 (second hex char after '{')
+    auto makeZMirrorId = [&flipHexNibble](const std::string& reversedId) -> std::string {
+        std::string id = reversedId;
+        if (id.size() >= 3)
+            id[2] = flipHexNibble(id[2]);
+        return id;
+    };
+
+    std::vector<std::map<std::string, std::string>> newYParts;
+    std::map<std::string, std::string> partOldToNewYMap;
+    for (auto& partIt : m_snapshot->parts) {
+        bool yMirrored = String::isTrue(String::valueOrEmpty(partIt.second, "yMirrored"));
+        if (!yMirrored)
+            continue;
+        std::map<std::string, std::string> mirroredPart = partIt.second;
+
+        std::string newPartIdString = makeYMirrorId(reverseUuid(mirroredPart["id"]));
+        partOldToNewYMap.insert({ mirroredPart["id"], newPartIdString });
+
+        mirroredPart["__yMirrorFromPartId"] = mirroredPart["id"];
+        mirroredPart["id"] = newPartIdString;
+        mirroredPart["__dirty"] = "true";
+        newYParts.push_back(mirroredPart);
+    }
+
+    for (const auto& it : partOldToNewYMap)
+        m_snapshot->parts[it.second]["__yMirroredByPartId"] = it.first;
+
+    // Z-mirror
+    std::vector<std::map<std::string, std::string>> newZParts;
+    std::map<std::string, std::string> partOldToNewZMap;
+    for (auto& partIt : m_snapshot->parts) {
+        bool zMirrored = String::isTrue(String::valueOrEmpty(partIt.second, "zMirrored"));
+        if (!zMirrored)
+            continue;
+        std::map<std::string, std::string> mirroredPart = partIt.second;
+
+        std::string newPartIdString = makeZMirrorId(reverseUuid(mirroredPart["id"]));
+        partOldToNewZMap.insert({ mirroredPart["id"], newPartIdString });
+
+        mirroredPart["__zMirrorFromPartId"] = mirroredPart["id"];
+        mirroredPart["id"] = newPartIdString;
+        mirroredPart["__dirty"] = "true";
+        newZParts.push_back(mirroredPart);
+    }
+
+    for (const auto& it : partOldToNewZMap)
+        m_snapshot->parts[it.second]["__zMirroredByPartId"] = it.first;
+
     std::map<std::string, std::string> parentMap;
     for (auto& componentIt : m_snapshot->components) {
         for (const auto& childId : String::split(String::valueOrEmpty(componentIt.second, "children"), ',')) {
@@ -1242,10 +1320,74 @@ void MeshGenerator::preprocessMirror()
         newComponents.push_back(mirroredComponent);
     }
 
+    // Create component entries for Y-mirror parts
+    std::vector<std::map<std::string, std::string>> newYComponents;
+    for (auto& componentIt : m_snapshot->components) {
+        std::string linkDataType = String::valueOrEmpty(componentIt.second, "linkDataType");
+        if ("partId" != linkDataType)
+            continue;
+        std::string partIdString = String::valueOrEmpty(componentIt.second, "linkData");
+        auto findPart = partOldToNewYMap.find(partIdString);
+        if (findPart == partOldToNewYMap.end())
+            continue;
+        std::map<std::string, std::string> mirroredComponent = componentIt.second;
+        std::string newComponentIdString = makeYMirrorId(reverseUuid(mirroredComponent["id"]));
+        mirroredComponent["linkData"] = findPart->second;
+        mirroredComponent["id"] = newComponentIdString;
+        mirroredComponent["__dirty"] = "true";
+        parentMap[newComponentIdString] = parentMap[String::valueOrEmpty(componentIt.second, "id")];
+        newYComponents.push_back(mirroredComponent);
+    }
+
+    // Create component entries for Z-mirror parts
+    std::vector<std::map<std::string, std::string>> newZComponents;
+    for (auto& componentIt : m_snapshot->components) {
+        std::string linkDataType = String::valueOrEmpty(componentIt.second, "linkDataType");
+        if ("partId" != linkDataType)
+            continue;
+        std::string partIdString = String::valueOrEmpty(componentIt.second, "linkData");
+        auto findPart = partOldToNewZMap.find(partIdString);
+        if (findPart == partOldToNewZMap.end())
+            continue;
+        std::map<std::string, std::string> mirroredComponent = componentIt.second;
+        std::string newComponentIdString = makeZMirrorId(reverseUuid(mirroredComponent["id"]));
+        mirroredComponent["linkData"] = findPart->second;
+        mirroredComponent["id"] = newComponentIdString;
+        mirroredComponent["__dirty"] = "true";
+        parentMap[newComponentIdString] = parentMap[String::valueOrEmpty(componentIt.second, "id")];
+        newZComponents.push_back(mirroredComponent);
+    }
+
     for (const auto& it : newParts) {
         m_snapshot->parts[String::valueOrEmpty(it, "id")] = it;
     }
     for (const auto& it : newComponents) {
+        std::string idString = String::valueOrEmpty(it, "id");
+        std::string parentIdString = parentMap[idString];
+        m_snapshot->components[idString] = it;
+        if (parentIdString.empty()) {
+            m_snapshot->rootComponent["children"] += "," + idString;
+        } else {
+            m_snapshot->components[parentIdString]["children"] += "," + idString;
+        }
+    }
+    for (const auto& it : newYParts) {
+        m_snapshot->parts[String::valueOrEmpty(it, "id")] = it;
+    }
+    for (const auto& it : newYComponents) {
+        std::string idString = String::valueOrEmpty(it, "id");
+        std::string parentIdString = parentMap[idString];
+        m_snapshot->components[idString] = it;
+        if (parentIdString.empty()) {
+            m_snapshot->rootComponent["children"] += "," + idString;
+        } else {
+            m_snapshot->components[parentIdString]["children"] += "," + idString;
+        }
+    }
+    for (const auto& it : newZParts) {
+        m_snapshot->parts[String::valueOrEmpty(it, "id")] = it;
+    }
+    for (const auto& it : newZComponents) {
         std::string idString = String::valueOrEmpty(it, "id");
         std::string parentIdString = parentMap[idString];
         m_snapshot->components[idString] = it;

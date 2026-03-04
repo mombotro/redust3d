@@ -135,19 +135,38 @@ ComponentPropertyWidget::ComponentPropertyWidget(Document* document,
             emit groupOperationAdded();
         });
 
-        QCheckBox* mirrorStateBox = new QCheckBox();
-        Theme::initCheckbox(mirrorStateBox);
-        mirrorStateBox->setText(tr("Mirrored"));
-        mirrorStateBox->setChecked(m_part->xMirrored);
+        QCheckBox* mirrorXBox = new QCheckBox(tr("Mirror X"));
+        Theme::initCheckbox(mirrorXBox);
+        mirrorXBox->setChecked(m_part->xMirrored);
 
-        connect(mirrorStateBox, &QCheckBox::stateChanged, this, [=]() {
-            emit setPartXmirrorState(m_partId, mirrorStateBox->isChecked());
+        connect(mirrorXBox, &QCheckBox::toggled, this, [=](bool checked) {
+            emit setPartXmirrorState(m_partId, checked);
+            emit groupOperationAdded();
+        });
+
+        QCheckBox* mirrorYBox = new QCheckBox(tr("Mirror Y"));
+        Theme::initCheckbox(mirrorYBox);
+        mirrorYBox->setChecked(m_part->yMirrored);
+
+        connect(mirrorYBox, &QCheckBox::toggled, this, [=](bool checked) {
+            emit setPartYmirrorState(m_partId, checked);
+            emit groupOperationAdded();
+        });
+
+        QCheckBox* mirrorZBox = new QCheckBox(tr("Mirror Z"));
+        Theme::initCheckbox(mirrorZBox);
+        mirrorZBox->setChecked(m_part->zMirrored);
+
+        connect(mirrorZBox, &QCheckBox::toggled, this, [=](bool checked) {
+            emit setPartZmirrorState(m_partId, checked);
             emit groupOperationAdded();
         });
 
         QHBoxLayout* deformUnifyLayout = new QHBoxLayout;
         deformUnifyLayout->addStretch();
-        deformUnifyLayout->addWidget(mirrorStateBox);
+        deformUnifyLayout->addWidget(mirrorXBox);
+        deformUnifyLayout->addWidget(mirrorYBox);
+        deformUnifyLayout->addWidget(mirrorZBox);
         deformUnifyLayout->addWidget(deformUnifyStateBox);
 
         deformLayout->addLayout(thicknessLayout);
@@ -561,6 +580,8 @@ ComponentPropertyWidget::ComponentPropertyWidget(Document* document,
     connect(this, &ComponentPropertyWidget::setPartCutFace, m_document, &Document::setPartCutFace);
     connect(this, &ComponentPropertyWidget::setPartCutFaceLinkedId, m_document, &Document::setPartCutFaceLinkedId);
     connect(this, &ComponentPropertyWidget::setPartXmirrorState, m_document, &Document::setPartXmirrorState);
+    connect(this, &ComponentPropertyWidget::setPartYmirrorState, m_document, &Document::setPartYmirrorState);
+    connect(this, &ComponentPropertyWidget::setPartZmirrorState, m_document, &Document::setPartZmirrorState);
     connect(this, &ComponentPropertyWidget::setComponentCombineMode, m_document, &Document::setComponentCombineMode);
     connect(this, &ComponentPropertyWidget::setPartBoneMark, m_document, &Document::setPartBoneMark);
     connect(this, &ComponentPropertyWidget::setPartIkState, m_document, &Document::setPartIkState);

@@ -1803,6 +1803,8 @@ void Document::toSnapshot(dust3d::Snapshot* snapshot, const std::set<dust3d::Uui
             part["subdived"] = partIt.second.subdived ? "true" : "false";
             part["disabled"] = partIt.second.disabled ? "true" : "false";
             part["xMirrored"] = partIt.second.xMirrored ? "true" : "false";
+            part["yMirrored"] = partIt.second.yMirrored ? "true" : "false";
+            part["zMirrored"] = partIt.second.zMirrored ? "true" : "false";
             part["rounded"] = partIt.second.rounded ? "true" : "false";
             part["chamfered"] = partIt.second.chamfered ? "true" : "false";
             if (dust3d::PartTarget::Model != partIt.second.target)
@@ -1986,6 +1988,8 @@ void Document::addFromSnapshot(const dust3d::Snapshot& snapshot, enum SnapshotSo
         part.subdived = dust3d::String::isTrue(dust3d::String::valueOrEmpty(partKv.second, "subdived"));
         part.disabled = dust3d::String::isTrue(dust3d::String::valueOrEmpty(partKv.second, "disabled"));
         part.xMirrored = dust3d::String::isTrue(dust3d::String::valueOrEmpty(partKv.second, "xMirrored"));
+        part.yMirrored = dust3d::String::isTrue(dust3d::String::valueOrEmpty(partKv.second, "yMirrored"));
+        part.zMirrored = dust3d::String::isTrue(dust3d::String::valueOrEmpty(partKv.second, "zMirrored"));
         part.rounded = dust3d::String::isTrue(dust3d::String::valueOrEmpty(partKv.second, "rounded"));
         part.chamfered = dust3d::String::isTrue(dust3d::String::valueOrEmpty(partKv.second, "chamfered"));
         part.target = dust3d::PartTargetFromString(dust3d::String::valueOrEmpty(partKv.second, "target").c_str());
@@ -2632,6 +2636,38 @@ void Document::setPartXmirrorState(dust3d::Uuid partId, bool mirrored)
     part->second.dirty = true;
     settleOrigin();
     emit partXmirrorStateChanged(partId);
+    emit skeletonChanged();
+}
+
+void Document::setPartYmirrorState(dust3d::Uuid partId, bool mirrored)
+{
+    auto part = partMap.find(partId);
+    if (part == partMap.end()) {
+        qDebug() << "Part not found:" << partId;
+        return;
+    }
+    if (part->second.yMirrored == mirrored)
+        return;
+    part->second.yMirrored = mirrored;
+    part->second.dirty = true;
+    settleOrigin();
+    emit partYmirrorStateChanged(partId);
+    emit skeletonChanged();
+}
+
+void Document::setPartZmirrorState(dust3d::Uuid partId, bool mirrored)
+{
+    auto part = partMap.find(partId);
+    if (part == partMap.end()) {
+        qDebug() << "Part not found:" << partId;
+        return;
+    }
+    if (part->second.zMirrored == mirrored)
+        return;
+    part->second.zMirrored = mirrored;
+    part->second.dirty = true;
+    settleOrigin();
+    emit partZmirrorStateChanged(partId);
     emit skeletonChanged();
 }
 
