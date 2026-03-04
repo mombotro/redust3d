@@ -23,6 +23,7 @@
 #ifndef DUST3D_BASE_BONE_MARK_H_
 #define DUST3D_BASE_BONE_MARK_H_
 
+#include <dust3d/base/color.h>
 #include <string>
 
 namespace dust3d {
@@ -45,6 +46,7 @@ inline bool boneMarkIsBranchNode(BoneMark mark)
 BoneMark BoneMarkFromString(const char* markString);
 const char* BoneMarkToString(BoneMark mark);
 std::string BoneMarkToDispName(BoneMark mark);
+dust3d::Color BoneMarkToColor(BoneMark mark);
 
 }
 

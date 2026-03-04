@@ -21,6 +21,7 @@
  */
 
 #include <dust3d/base/bone_mark.h>
+#include <dust3d/base/color.h>
 
 namespace dust3d {
 
@@ -67,6 +68,17 @@ std::string BoneMarkToDispName(BoneMark mark)
         return std::string("Joint");
     default:
         return std::string("None");
+    }
+}
+
+dust3d::Color BoneMarkToColor(BoneMark mark)
+{
+    switch (mark) {
+    case BoneMark::Neck:  return dust3d::Color(0xfd / 255.0, 0x64 / 255.0, 0x61 / 255.0);
+    case BoneMark::Limb:  return dust3d::Color(0x55 / 255.0, 0xad / 255.0, 0xff / 255.0);
+    case BoneMark::Tail:  return dust3d::Color(0x4c / 255.0, 0xaf / 255.0, 0x50 / 255.0);
+    case BoneMark::Joint: return dust3d::Color(0xff / 255.0, 0xe0 / 255.0, 0x82 / 255.0);
+    default:              return dust3d::Color(0, 0, 0, 0);
     }
 }
 

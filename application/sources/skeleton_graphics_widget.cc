@@ -63,6 +63,20 @@ SkeletonGraphicsWidget::SkeletonGraphicsWidget(const Document* document)
 
     setContextMenuPolicy(Qt::CustomContextMenu);
     connect(this, &SkeletonGraphicsWidget::customContextMenuRequested, this, &SkeletonGraphicsWidget::showContextMenu);
+
+    connect(m_document, &Document::nodeBoneMarkChanged, this, [=](dust3d::Uuid nodeId) {
+        auto it = nodeItemMap.find(nodeId);
+        if (it == nodeItemMap.end())
+            return;
+        const auto* node = m_document->findNode(nodeId);
+        if (!node)
+            return;
+        auto color = dust3d::BoneMarkToColor(node->boneMark);
+        QColor qcolor(color.r() * 255, color.g() * 255, color.b() * 255);
+        bool hasMark = node->boneMark != dust3d::BoneMark::None;
+        it->second.first->setMarkColor(hasMark ? qcolor : Qt::transparent);
+        it->second.second->setMarkColor(hasMark ? qcolor : Qt::transparent);
+    });
 }
 
 SkeletonGraphicsWidget::~SkeletonGraphicsWidget()
@@ -2045,6 +2059,13 @@ void SkeletonGraphicsWidget::nodeAdded(dust3d::Uuid nodeId)
     scene()->addItem(mainProfileItem);
     scene()->addItem(sideProfileItem);
     nodeItemMap[nodeId] = std::make_pair(mainProfileItem, sideProfileItem);
+
+    if (node->boneMark != dust3d::BoneMark::None) {
+        auto color = dust3d::BoneMarkToColor(node->boneMark);
+        QColor qcolor(color.r() * 255, color.g() * 255, color.b() * 255);
+        mainProfileItem->setMarkColor(qcolor);
+        sideProfileItem->setMarkColor(qcolor);
+    }
 
     if (nullptr == m_addFromNodeItem) {
         m_addFromNodeItem = mainProfileItem;
