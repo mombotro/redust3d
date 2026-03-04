@@ -1009,7 +1009,7 @@ void RigGenerator::renameBonesForRigType()
 {
     if (!m_resultBones)
         return;
-    if (m_rigType == dust3d::RigType::Animal)
+    if (m_rigType == dust3d::RigType::Animal || m_rigType == dust3d::RigType::None)
         return;
 
     if (m_rigType == dust3d::RigType::Human) {
@@ -1101,7 +1101,7 @@ void RigGenerator::renameBonesForRigType()
                     const auto& firstBodyNode = m_bodyNodes[joints[0]];
                     auto partNameIt = nodeIdToPartName.find(firstBodyNode.nodeId);
                     if (partNameIt != nodeIdToPartName.end() && !partNameIt->second.empty())
-                        chainBaseName = partNameIt->second;
+                        chainBaseName = sidePrefix + partNameIt->second;
                 }
                 // Rename bones in this chain
                 for (size_t j = 0; j + 1 < joints.size(); ++j) {
@@ -1152,12 +1152,10 @@ void RigGenerator::renameBonesForRigType()
         // Rename spine bones using part name from first spine joint
         if (!m_spineJoints.empty()) {
             std::string chainBaseName = "Spine";
-            if (m_spineJoints.size() > (size_t)0) {
-                const auto& firstBodyNode = m_bodyNodes[m_spineJoints[0]];
-                auto partNameIt = nodeIdToPartName.find(firstBodyNode.nodeId);
-                if (partNameIt != nodeIdToPartName.end() && !partNameIt->second.empty())
-                    chainBaseName = partNameIt->second;
-            }
+            const auto& firstBodyNode = m_bodyNodes[m_spineJoints[0]];
+            auto partNameIt = nodeIdToPartName.find(firstBodyNode.nodeId);
+            if (partNameIt != nodeIdToPartName.end() && !partNameIt->second.empty())
+                chainBaseName = partNameIt->second;
             int spineIdx = 0;
             for (auto& bone : *m_resultBones) {
                 if (bone.role == dust3d::BoneRole::Spine) {
