@@ -627,6 +627,8 @@ std::unique_ptr<MeshState> MeshGenerator::combinePartMesh(const std::string& par
     bool isDisabled = String::isTrue(String::valueOrEmpty(part, "disabled"));
     std::string __mirroredByPartId = String::valueOrEmpty(part, "__mirroredByPartId");
     std::string __mirrorFromPartId = String::valueOrEmpty(part, "__mirrorFromPartId");
+    std::string __yMirrorFromPartId = String::valueOrEmpty(part, "__yMirrorFromPartId");
+    std::string __zMirrorFromPartId = String::valueOrEmpty(part, "__zMirrorFromPartId");
     bool subdived = String::isTrue(String::valueOrEmpty(part, "subdived"));
     bool rounded = String::isTrue(String::valueOrEmpty(part, "rounded"));
     bool chamfered = String::isTrue(String::valueOrEmpty(part, "chamfered"));
@@ -636,7 +638,13 @@ std::unique_ptr<MeshState> MeshGenerator::combinePartMesh(const std::string& par
     float hollowThickness = 0.0;
     auto target = PartTargetFromString(String::valueOrEmpty(part, "target").c_str());
 
-    std::string searchPartIdString = __mirrorFromPartId.empty() ? partIdString : __mirrorFromPartId;
+    std::string searchPartIdString = partIdString;
+    if (!__mirrorFromPartId.empty())
+        searchPartIdString = __mirrorFromPartId;
+    else if (!__yMirrorFromPartId.empty())
+        searchPartIdString = __yMirrorFromPartId;
+    else if (!__zMirrorFromPartId.empty())
+        searchPartIdString = __zMirrorFromPartId;
 
     std::string cutFaceString = String::valueOrEmpty(part, "cutFace");
     std::vector<Vector2> cutTemplate;

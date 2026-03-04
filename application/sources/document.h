@@ -108,8 +108,8 @@ public:
         bool subdived;
         bool disabled;
         bool xMirrored;
-        bool yMirrored = false;
-        bool zMirrored = false;
+        bool yMirrored;
+        bool zMirrored;
         float deformThickness;
         float deformWidth;
         bool deformUnified;

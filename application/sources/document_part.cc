@@ -6,6 +6,8 @@ Document::Part::Part(const dust3d::Uuid& withId)
     , subdived(false)
     , disabled(false)
     , xMirrored(false)
+    , yMirrored(false)
+    , zMirrored(false)
     , deformThickness(1.0)
     , deformWidth(1.0)
     , deformUnified(false)
@@ -122,6 +124,8 @@ void Document::Part::copyAttributes(const Part& other)
     subdived = other.subdived;
     disabled = other.disabled;
     xMirrored = other.xMirrored;
+    yMirrored = other.yMirrored;
+    zMirrored = other.zMirrored;
     deformThickness = other.deformThickness;
     deformWidth = other.deformWidth;
     rounded = other.rounded;
