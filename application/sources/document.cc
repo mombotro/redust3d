@@ -1656,9 +1656,14 @@ void Document::setPartIkState(const dust3d::Uuid& partId, bool enabled, float mi
     auto partIt = partMap.find(partId);
     if (partIt == partMap.end())
         return;
+    if (partIt->second.ikEnabled == enabled &&
+            partIt->second.ikHingeMinDegrees == minDegrees &&
+            partIt->second.ikHingeMaxDegrees == maxDegrees)
+        return;
     partIt->second.ikEnabled = enabled;
     partIt->second.ikHingeMinDegrees = minDegrees;
     partIt->second.ikHingeMaxDegrees = maxDegrees;
+    partIt->second.dirty = true;
     emit partIkStateChanged(partId);
     emit skeletonChanged();
 }
@@ -1668,7 +1673,12 @@ void Document::setNodeIsIkEndEffector(const dust3d::Uuid& nodeId, bool isEndEffe
     auto nodeIt = nodeMap.find(nodeId);
     if (nodeIt == nodeMap.end())
         return;
+    if (nodeIt->second.isIkEndEffector == isEndEffector)
+        return;
     nodeIt->second.isIkEndEffector = isEndEffector;
+    auto part = partMap.find(nodeIt->second.partId);
+    if (part != partMap.end())
+        part->second.dirty = true;
     emit nodeIsIkEndEffectorChanged(nodeId);
     emit skeletonChanged();
 }
@@ -1823,9 +1833,11 @@ void Document::toSnapshot(dust3d::Snapshot* snapshot, const std::set<dust3d::Uui
                 part["hollowThickness"] = std::to_string(partIt.second.hollowThickness);
             if (!partIt.second.name.isEmpty())
                 part["name"] = partIt.second.name.toUtf8().constData();
-            part["ikEnabled"] = partIt.second.ikEnabled ? "true" : "false";
-            part["ikHingeMinDegrees"] = std::to_string(partIt.second.ikHingeMinDegrees);
-            part["ikHingeMaxDegrees"] = std::to_string(partIt.second.ikHingeMaxDegrees);
+            if (partIt.second.ikEnabled) {
+                part["ikEnabled"] = "true";
+                part["ikHingeMinDegrees"] = std::to_string(partIt.second.ikHingeMinDegrees);
+                part["ikHingeMaxDegrees"] = std::to_string(partIt.second.ikHingeMaxDegrees);
+            }
             snapshot->parts[part["id"]] = part;
         }
         for (const auto& nodeIt : nodeMap) {

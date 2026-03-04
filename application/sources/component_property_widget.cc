@@ -2,7 +2,6 @@
 #include "cut_face_preview.h"
 #include "float_number_widget.h"
 #include "flow_layout.h"
-#include "int_number_widget.h"
 #include "image_forever.h"
 #include "image_preview_widget.h"
 #include "theme.h"
