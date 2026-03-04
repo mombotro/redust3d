@@ -6,6 +6,7 @@
 #include "mesh_preview_images_generator.h"
 #include "model_widget.h"
 #include <QAction>
+#include <QActionGroup>
 #include <QLabel>
 #include <QMainWindow>
 #include <QMenu>
@@ -95,6 +96,7 @@ public slots:
     void forceUpdateRenderModel();
     void updateRenderWireframe();
     void forceUpdateRenderWireframe();
+    void updateRigMenu();
 
 private:
     void setCurrentFilename(const QString& filename);
@@ -146,6 +148,11 @@ private:
     QAction* m_toggleRotationAction = nullptr;
     QAction* m_toggleColorAction = nullptr;
     bool m_modelRemoveColor = false;
+
+    QMenu* m_rigMenu = nullptr;
+    QAction* m_setRigNoneAction = nullptr;
+    QAction* m_setRigAnimalAction = nullptr;
+    QActionGroup* m_rigTypeActionGroup = nullptr;
 
     QMenu* m_windowMenu = nullptr;
     QAction* m_showPartsListAction = nullptr;

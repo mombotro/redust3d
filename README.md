@@ -1,6 +1,34 @@
-# Dust3D
+# Dust3D (redust3d fork)
+
+> **This is a fork of [huxingyi/dust3d](https://github.com/huxingyi/dust3d) (RC9/master) that re-integrates the rigging system from RC6.**
 
 Dust3D is a cross-platform 3D modeling software that makes it easy to create low poly 3D models for video games, 3D printing, and more.
+
+## What this fork adds
+
+The upstream RC9 codebase removed the rigging system that was present in RC6. This fork ports it back, adapted to RC9's architecture (no Qt types in the core library, no TBB, `Object` instead of `Outcome`).
+
+### Rigging features
+
+- **Bone marks** — right-click any node in the canvas to assign a bone mark (Neck, Limb, Tail, Joint). Marks guide the auto-rigger in identifying spine, limb, and tail chains.
+- **Rig type menu** — the **Rig** menu in the menu bar lets you switch between *None* and *Animal* rigging modes.
+- **Auto-rig generation** — selecting *Animal* triggers the `RigGenerator` which builds a skeleton from the bone-marked mesh automatically. The rig regenerates whenever the mesh changes.
+- **FBX skeleton export** — exporting as FBX includes the generated skeleton (armature + limb nodes) and per-vertex skin weights so the model can be animated in external tools.
+
+### Changed files (relative to upstream RC9)
+
+| File | Change |
+|------|--------|
+| `dust3d/base/bone_mark.h/.cc` | Added `BoneMark` enum and string conversion |
+| `dust3d/base/rig_type.h/.cc` | Added `RigType` enum (None, Animal) |
+| `dust3d/base/rig_bone.h` | Added `RiggerBone`, `RiggerVertexWeights`, `BoneRole`, `BoneSide` |
+| `dust3d/base/object.h` | Extended `ObjectNode` with `partId`, `nodeId`, `radius`, `boneMark`; added `bodyEdges` to `Object` |
+| `dust3d/mesh/mesh_generator.cc/.h` | Populates `boneMark`, `bodyEdges`, and `triangleSourceNodes` after mesh generation |
+| `application/sources/rig_generator.h/.cc` | Full port of RC6 `RigGenerator` to RC9 types (no Qt, no TBB) |
+| `application/sources/document.h/.cc` | Wires rig generation lifecycle: `setRigType`, `setNodeBoneMark`, `regenerateRig`, `rigReady` |
+| `application/sources/skeleton_graphics_widget.cc` | Bone mark submenu in canvas right-click context menu |
+| `application/sources/document_window.cc` | Rig menu, connects signals, passes rig data to FBX exporter |
+| `application/sources/fbx_file.h/.cc` | Generates FBX armature, limb nodes, skin deformer, and cluster weights |
 
 ## Getting Started
 

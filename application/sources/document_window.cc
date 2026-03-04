@@ -17,6 +17,7 @@
 #include "theme.h"
 #include "uv_map_generator.h"
 #include "version.h"
+#include <QActionGroup>
 #include <QApplication>
 #include <QDesktopServices>
 #include <QDir>
@@ -43,6 +44,7 @@
 #include <QtCore/qbuffer.h>
 #include <dust3d/base/debug.h>
 #include <dust3d/base/ds3_file.h>
+#include <dust3d/base/rig_type.h>
 #include <dust3d/base/snapshot.h>
 #include <dust3d/base/snapshot_xml.h>
 #include <map>
@@ -402,6 +404,30 @@ DocumentWindow::DocumentWindow()
     connect(m_toggleColorAction, &QAction::triggered, this, &DocumentWindow::toggleRenderColor);
     m_viewMenu->addAction(m_toggleColorAction);
 
+    m_rigMenu = menuBar()->addMenu(tr("Ri&g"));
+
+    m_rigTypeActionGroup = new QActionGroup(this);
+    m_rigTypeActionGroup->setExclusive(true);
+
+    m_setRigNoneAction = new QAction(tr("None"), this);
+    m_setRigNoneAction->setCheckable(true);
+    m_setRigNoneAction->setChecked(true);
+    connect(m_setRigNoneAction, &QAction::triggered, [=]() {
+        m_document->setRigType(dust3d::RigType::None);
+    });
+    m_rigTypeActionGroup->addAction(m_setRigNoneAction);
+    m_rigMenu->addAction(m_setRigNoneAction);
+
+    m_setRigAnimalAction = new QAction(tr("Animal"), this);
+    m_setRigAnimalAction->setCheckable(true);
+    connect(m_setRigAnimalAction, &QAction::triggered, [=]() {
+        m_document->setRigType(dust3d::RigType::Animal);
+    });
+    m_rigTypeActionGroup->addAction(m_setRigAnimalAction);
+    m_rigMenu->addAction(m_setRigAnimalAction);
+
+    connect(m_document, &Document::rigChanged, this, &DocumentWindow::updateRigMenu);
+
     m_windowMenu = menuBar()->addMenu(tr("&Window"));
 
     m_showPartsListAction = new QAction(tr("Parts"), this);
@@ -626,6 +652,12 @@ DocumentWindow::DocumentWindow()
             canvasGraphicsWidget->setFocus();
     });
     timer->start();
+}
+
+void DocumentWindow::updateRigMenu()
+{
+    m_setRigNoneAction->setChecked(m_document->rigType == dust3d::RigType::None);
+    m_setRigAnimalAction->setChecked(m_document->rigType == dust3d::RigType::Animal);
 }
 
 void DocumentWindow::updateInprogressIndicator()
