@@ -1617,6 +1617,15 @@ void Document::setNodeCutFaceLinkedId(dust3d::Uuid nodeId, dust3d::Uuid linkedId
     emit skeletonChanged();
 }
 
+void Document::setPartBoneMark(dust3d::Uuid partId, dust3d::BoneMark mark)
+{
+    auto part = partMap.find(partId);
+    if (part == partMap.end())
+        return;
+    for (const auto& nodeId : part->second.nodeIds)
+        setNodeBoneMark(nodeId, mark);
+}
+
 void Document::setNodeBoneMark(dust3d::Uuid nodeId, dust3d::BoneMark mark)
 {
     auto node = nodeMap.find(nodeId);

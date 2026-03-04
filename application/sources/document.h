@@ -398,6 +398,7 @@ public slots:
     void setNodeCutFaceLinkedId(dust3d::Uuid nodeId, dust3d::Uuid linkedId);
     void clearNodeCutFaceSettings(dust3d::Uuid nodeId);
     void setNodeBoneMark(dust3d::Uuid nodeId, dust3d::BoneMark mark);
+    void setPartBoneMark(dust3d::Uuid partId, dust3d::BoneMark mark);
     void setRigType(dust3d::RigType type);
     void setEditMode(EditMode mode);
     void uiReady();

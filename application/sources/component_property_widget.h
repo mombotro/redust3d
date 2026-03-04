@@ -4,6 +4,7 @@
 #include "document.h"
 #include <QColorDialog>
 #include <QWidget>
+#include <dust3d/base/bone_mark.h>
 #include <dust3d/base/uuid.h>
 #include <memory>
 
@@ -32,6 +33,7 @@ signals:
     void setPartCutFaceLinkedId(const dust3d::Uuid& partId, dust3d::Uuid linkedId);
     void setPartXmirrorState(dust3d::Uuid partId, bool mirrored);
     void setComponentCombineMode(dust3d::Uuid componentId, dust3d::CombineMode combineMode);
+    void setPartBoneMark(dust3d::Uuid partId, dust3d::BoneMark mark);
     void groupOperationAdded();
 
 public:

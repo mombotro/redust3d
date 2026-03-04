@@ -8,11 +8,13 @@
 #include <QColorDialog>
 #include <QComboBox>
 #include <QFileDialog>
+#include <QFormLayout>
 #include <QGroupBox>
 #include <QHBoxLayout>
 #include <QPushButton>
 #include <QSpinBox>
 #include <QVBoxLayout>
+#include <dust3d/base/bone_mark.h>
 #include <unordered_set>
 
 ComponentPropertyWidget::ComponentPropertyWidget(Document* document,
@@ -436,6 +438,31 @@ ComponentPropertyWidget::ComponentPropertyWidget(Document* document,
         stitchingLineGroupBox->setLayout(stitchingLineLayout);
     }
 
+    QGroupBox* rigGroupBox = nullptr;
+    if (nullptr != m_part) {
+        dust3d::BoneMark currentMark = dust3d::BoneMark::None;
+        if (!m_part->nodeIds.empty()) {
+            auto* firstNode = m_document->findNode(m_part->nodeIds.front());
+            if (firstNode)
+                currentMark = firstNode->boneMark;
+        }
+
+        auto* boneMarkCombo = new QComboBox;
+        for (int i = 0; i < (int)dust3d::BoneMark::Count; ++i) {
+            auto mark = (dust3d::BoneMark)i;
+            boneMarkCombo->addItem(QString::fromStdString(dust3d::BoneMarkToDispName(mark)));
+        }
+        boneMarkCombo->setCurrentIndex((int)currentMark);
+        connect(boneMarkCombo, QOverload<int>::of(&QComboBox::currentIndexChanged), [=](int index) {
+            emit setPartBoneMark(m_partId, (dust3d::BoneMark)index);
+        });
+
+        auto* rigLayout = new QFormLayout;
+        rigLayout->addRow(tr("Bone Mark"), boneMarkCombo);
+        rigGroupBox = new QGroupBox(tr("Rigging"));
+        rigGroupBox->setLayout(rigLayout);
+    }
+
     QVBoxLayout* mainLayout = new QVBoxLayout;
     mainLayout->addLayout(topLayout);
     if (nullptr != deformGroupBox)
@@ -447,6 +474,8 @@ ComponentPropertyWidget::ComponentPropertyWidget(Document* document,
     mainLayout->addLayout(skinLayout);
     if (nullptr != stitchingLineGroupBox)
         mainLayout->addWidget(stitchingLineGroupBox);
+    if (nullptr != rigGroupBox)
+        mainLayout->addWidget(rigGroupBox);
     mainLayout->setSizeConstraint(QLayout::SetFixedSize);
 
     connect(this, &ComponentPropertyWidget::setComponentColorState, m_document, &Document::setComponentColorState);
@@ -469,6 +498,7 @@ ComponentPropertyWidget::ComponentPropertyWidget(Document* document,
     connect(this, &ComponentPropertyWidget::setPartCutFaceLinkedId, m_document, &Document::setPartCutFaceLinkedId);
     connect(this, &ComponentPropertyWidget::setPartXmirrorState, m_document, &Document::setPartXmirrorState);
     connect(this, &ComponentPropertyWidget::setComponentCombineMode, m_document, &Document::setComponentCombineMode);
+    connect(this, &ComponentPropertyWidget::setPartBoneMark, m_document, &Document::setPartBoneMark);
     connect(this, &ComponentPropertyWidget::groupOperationAdded, m_document, &Document::saveSnapshot);
 
     setLayout(mainLayout);
