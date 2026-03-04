@@ -46,6 +46,7 @@ struct ObjectNode {
     Color color;
     float smoothCutoffDegrees = 0.0f;
     BoneMark boneMark = BoneMark::None;
+    std::string partName;
     //float metalness = 0.0;
     //float roughness = 1.0;
     //Uuid materialId;

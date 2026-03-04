@@ -507,6 +507,8 @@ std::unique_ptr<MeshState> MeshGenerator::combineStitchingMesh(const std::string
                 node.radius = static_cast<float>(meshNode.radius);
                 node.color = color;
                 node.smoothCutoffDegrees = smoothCutoffDegrees;
+                if (findPart != m_snapshot->parts.end())
+                    node.partName = String::valueOrEmpty(findPart->second, "name");
                 componentCache.nodeMap.emplace(meshNode.sourceId, std::move(node));
             }
         }
@@ -705,6 +707,7 @@ std::unique_ptr<MeshState> MeshGenerator::combinePartMesh(const std::string& par
             node.radius = static_cast<float>(meshNode.radius);
             node.color = color;
             node.smoothCutoffDegrees = smoothCutoffDegrees;
+            node.partName = String::valueOrEmpty(part, "name");
             partCache.nodeMap.emplace(meshNode.sourceId, std::move(node));
         }
     }

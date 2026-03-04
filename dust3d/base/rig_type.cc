@@ -29,6 +29,10 @@ RigType RigTypeFromString(const char* typeString)
     std::string type = typeString;
     if (type == "Animal")
         return RigType::Animal;
+    if (type == "Human")
+        return RigType::Human;
+    if (type == "Custom")
+        return RigType::Custom;
     return RigType::None;
 }
 
@@ -37,6 +41,10 @@ const char* RigTypeToString(RigType type)
     switch (type) {
     case RigType::Animal:
         return "Animal";
+    case RigType::Human:
+        return "Human";
+    case RigType::Custom:
+        return "Custom";
     default:
         return "None";
     }
@@ -47,6 +55,10 @@ std::string RigTypeToDispName(RigType type)
     switch (type) {
     case RigType::Animal:
         return std::string("Animal");
+    case RigType::Human:
+        return std::string("Human");
+    case RigType::Custom:
+        return std::string("Custom");
     default:
         return std::string("None");
     }

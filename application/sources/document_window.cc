@@ -426,6 +426,22 @@ DocumentWindow::DocumentWindow()
     m_rigTypeActionGroup->addAction(m_setRigAnimalAction);
     m_rigMenu->addAction(m_setRigAnimalAction);
 
+    m_setRigHumanAction = new QAction(tr("Human"), this);
+    m_setRigHumanAction->setCheckable(true);
+    connect(m_setRigHumanAction, &QAction::triggered, [=]() {
+        m_document->setRigType(dust3d::RigType::Human);
+    });
+    m_rigTypeActionGroup->addAction(m_setRigHumanAction);
+    m_rigMenu->addAction(m_setRigHumanAction);
+
+    m_setRigCustomAction = new QAction(tr("Custom"), this);
+    m_setRigCustomAction->setCheckable(true);
+    connect(m_setRigCustomAction, &QAction::triggered, [=]() {
+        m_document->setRigType(dust3d::RigType::Custom);
+    });
+    m_rigTypeActionGroup->addAction(m_setRigCustomAction);
+    m_rigMenu->addAction(m_setRigCustomAction);
+
     connect(m_document, &Document::rigChanged, this, &DocumentWindow::updateRigMenu);
 
     m_windowMenu = menuBar()->addMenu(tr("&Window"));
@@ -658,6 +674,8 @@ void DocumentWindow::updateRigMenu()
 {
     m_setRigNoneAction->setChecked(m_document->rigType == dust3d::RigType::None);
     m_setRigAnimalAction->setChecked(m_document->rigType == dust3d::RigType::Animal);
+    m_setRigHumanAction->setChecked(m_document->rigType == dust3d::RigType::Human);
+    m_setRigCustomAction->setChecked(m_document->rigType == dust3d::RigType::Custom);
 }
 
 void DocumentWindow::updateInprogressIndicator()

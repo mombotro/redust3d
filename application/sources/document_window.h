@@ -152,6 +152,8 @@ private:
     QMenu* m_rigMenu = nullptr;
     QAction* m_setRigNoneAction = nullptr;
     QAction* m_setRigAnimalAction = nullptr;
+    QAction* m_setRigHumanAction = nullptr;
+    QAction* m_setRigCustomAction = nullptr;
     QActionGroup* m_rigTypeActionGroup = nullptr;
 
     QMenu* m_windowMenu = nullptr;

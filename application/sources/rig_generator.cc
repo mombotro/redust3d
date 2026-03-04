@@ -980,12 +980,205 @@ void RigGenerator::removeBranchsFromNodes(const std::vector<std::vector<size_t>>
     *resultNodes = std::move(filtered);
 }
 
+std::string RigGenerator::humanBoneName(dust3d::BoneRole role, dust3d::BoneSide side, int chainIndex, int boneIndex)
+{
+    // Spine chain
+    if (role == dust3d::BoneRole::Spine || role == dust3d::BoneRole::SpineReverse) {
+        static const std::vector<std::string> spineNames = { "Hips", "Spine", "Spine1", "Chest", "Neck", "Head" };
+        if ((size_t)boneIndex < spineNames.size())
+            return spineNames[boneIndex];
+        return "Spine" + std::to_string(boneIndex);
+    }
+    std::string sideStr = (side == dust3d::BoneSide::Left) ? "Left" : "Right";
+    if (role == dust3d::BoneRole::Limb) {
+        static const char* armBones[] = { "UpperArm", "LowerArm", "Hand" };
+        static const char* legBones[] = { "UpperLeg", "LowerLeg", "Foot" };
+        const char** boneNames = (chainIndex < 2) ? armBones : legBones;
+        if (boneIndex < 3)
+            return sideStr + boneNames[boneIndex];
+        return sideStr + "Limb" + std::to_string(boneIndex);
+    }
+    if (role == dust3d::BoneRole::Neck)
+        return (boneIndex == 0) ? "Neck" : "Head";
+    if (role == dust3d::BoneRole::Tail)
+        return "Tail" + std::to_string(boneIndex);
+    return "Bone" + std::to_string(boneIndex);
+}
+
+void RigGenerator::renameBonesForRigType()
+{
+    if (!m_resultBones)
+        return;
+    if (m_rigType == dust3d::RigType::Animal)
+        return;
+
+    if (m_rigType == dust3d::RigType::Human) {
+        // Rename spine bones
+        int spineForwardIdx = 0;
+        int spineReverseIdx = 0;
+        std::map<int, int> limbBoneChainIndex; // bone index -> chain index
+        std::map<int, int> limbBoneIndexInChain; // bone index -> index within chain
+
+        // First pass: figure out chain/bone indices for limb bones
+        // Each limb chain has bones from m_leftLimbJoints[i] or m_rightLimbJoints[i]
+        for (size_t i = 0; i < m_leftLimbJoints.size(); ++i) {
+            const auto& joints = m_leftLimbJoints[i];
+            for (size_t j = 0; j + 1 < joints.size(); ++j) {
+                // The bone corresponding to joints[j] -> joints[j+1] in LeftLimb(i+1)
+                // Its name in Animal mode is "LeftLimb" + (i+1) + "_Joint" + (j+1)
+                std::string animalName = std::string("LeftLimb") + std::to_string(i + 1) + std::string("_Joint") + std::to_string(j + 1);
+                auto it = m_boneNameToIndexMap.find(animalName);
+                if (it != m_boneNameToIndexMap.end()) {
+                    limbBoneChainIndex[it->second] = (int)i;
+                    limbBoneIndexInChain[it->second] = (int)j;
+                }
+            }
+        }
+        for (size_t i = 0; i < m_rightLimbJoints.size(); ++i) {
+            const auto& joints = m_rightLimbJoints[i];
+            for (size_t j = 0; j + 1 < joints.size(); ++j) {
+                std::string animalName = std::string("RightLimb") + std::to_string(i + 1) + std::string("_Joint") + std::to_string(j + 1);
+                auto it = m_boneNameToIndexMap.find(animalName);
+                if (it != m_boneNameToIndexMap.end()) {
+                    limbBoneChainIndex[it->second] = (int)i;
+                    limbBoneIndexInChain[it->second] = (int)j;
+                }
+            }
+        }
+
+        // Rename all bones
+        for (auto& bone : *m_resultBones) {
+            if (bone.role == dust3d::BoneRole::Spine) {
+                bone.name = humanBoneName(bone.role, bone.side, 0, spineForwardIdx + 1);
+                ++spineForwardIdx;
+            } else if (bone.role == dust3d::BoneRole::SpineReverse) {
+                bone.name = humanBoneName(bone.role, bone.side, 0, spineReverseIdx);
+                ++spineReverseIdx;
+            } else if (bone.role == dust3d::BoneRole::Limb) {
+                auto chainIt = limbBoneChainIndex.find(bone.index);
+                auto indexIt = limbBoneIndexInChain.find(bone.index);
+                if (chainIt != limbBoneChainIndex.end() && indexIt != limbBoneIndexInChain.end()) {
+                    bone.name = humanBoneName(bone.role, bone.side, chainIt->second, indexIt->second);
+                }
+            } else if (bone.role == dust3d::BoneRole::Neck) {
+                // Count neck bone index
+                int neckIdx = 0;
+                for (int pi = bone.index - 1; pi >= 0; --pi) {
+                    if ((*m_resultBones)[pi].role == dust3d::BoneRole::Neck)
+                        ++neckIdx;
+                    else
+                        break;
+                }
+                bone.name = humanBoneName(bone.role, bone.side, 0, neckIdx);
+            } else if (bone.role == dust3d::BoneRole::Tail) {
+                int tailIdx = 0;
+                for (int pi = bone.index - 1; pi >= 0; --pi) {
+                    if ((*m_resultBones)[pi].role == dust3d::BoneRole::Tail)
+                        ++tailIdx;
+                    else
+                        break;
+                }
+                bone.name = humanBoneName(bone.role, bone.side, 0, tailIdx);
+            }
+        }
+    } else if (m_rigType == dust3d::RigType::Custom) {
+        // For custom mode, rename limb bones using partName from object nodes
+        // Build a nodeId -> partName lookup
+        std::map<dust3d::Uuid, std::string> nodeIdToPartName;
+        for (const auto& kv : m_object->nodeMap) {
+            if (!kv.second.partName.empty())
+                nodeIdToPartName[kv.first] = kv.second.partName;
+        }
+
+        // Rename limb bones using part name from first joint of each chain
+        auto renameLimbChain = [&](const std::vector<std::vector<size_t>>& limbJoints,
+                                    const std::string& sidePrefix) {
+            for (size_t i = 0; i < limbJoints.size(); ++i) {
+                const auto& joints = limbJoints[i];
+                // Get part name from first joint node
+                std::string chainBaseName = sidePrefix + "Limb" + std::to_string(i + 1);
+                if (!joints.empty()) {
+                    const auto& firstBodyNode = m_bodyNodes[joints[0]];
+                    auto partNameIt = nodeIdToPartName.find(firstBodyNode.nodeId);
+                    if (partNameIt != nodeIdToPartName.end() && !partNameIt->second.empty())
+                        chainBaseName = partNameIt->second;
+                }
+                // Rename bones in this chain
+                for (size_t j = 0; j + 1 < joints.size(); ++j) {
+                    std::string animalName = sidePrefix + "Limb" + std::to_string(i + 1) + "_Joint" + std::to_string(j + 1);
+                    auto it = m_boneNameToIndexMap.find(animalName);
+                    if (it != m_boneNameToIndexMap.end()) {
+                        (*m_resultBones)[it->second].name = chainBaseName + "_" + std::to_string(j);
+                    }
+                }
+            }
+        };
+
+        renameLimbChain(m_leftLimbJoints, "Left");
+        renameLimbChain(m_rightLimbJoints, "Right");
+
+        // Rename neck bones using part name
+        if (!m_neckJoints.empty()) {
+            std::string chainBaseName = "Neck";
+            const auto& firstBodyNode = m_bodyNodes[m_neckJoints[0]];
+            auto partNameIt = nodeIdToPartName.find(firstBodyNode.nodeId);
+            if (partNameIt != nodeIdToPartName.end() && !partNameIt->second.empty())
+                chainBaseName = partNameIt->second;
+            for (size_t j = 0; j + 1 < m_neckJoints.size(); ++j) {
+                std::string animalName = std::string("Neck_Joint") + std::to_string(j + 1);
+                auto it = m_boneNameToIndexMap.find(animalName);
+                if (it != m_boneNameToIndexMap.end()) {
+                    (*m_resultBones)[it->second].name = chainBaseName + "_" + std::to_string(j);
+                }
+            }
+        }
+
+        // Rename tail bones using part name
+        if (!m_tailJoints.empty()) {
+            std::string chainBaseName = "Tail";
+            const auto& firstBodyNode = m_bodyNodes[m_tailJoints[0]];
+            auto partNameIt = nodeIdToPartName.find(firstBodyNode.nodeId);
+            if (partNameIt != nodeIdToPartName.end() && !partNameIt->second.empty())
+                chainBaseName = partNameIt->second;
+            for (size_t j = 0; j + 1 < m_tailJoints.size(); ++j) {
+                std::string animalName = std::string("Tail_Joint") + std::to_string(j + 1);
+                auto it = m_boneNameToIndexMap.find(animalName);
+                if (it != m_boneNameToIndexMap.end()) {
+                    (*m_resultBones)[it->second].name = chainBaseName + "_" + std::to_string(j);
+                }
+            }
+        }
+
+        // Rename spine bones using part name from first spine joint
+        if (!m_spineJoints.empty()) {
+            std::string chainBaseName = "Spine";
+            if (m_spineJoints.size() > (size_t)0) {
+                const auto& firstBodyNode = m_bodyNodes[m_spineJoints[0]];
+                auto partNameIt = nodeIdToPartName.find(firstBodyNode.nodeId);
+                if (partNameIt != nodeIdToPartName.end() && !partNameIt->second.empty())
+                    chainBaseName = partNameIt->second;
+            }
+            int spineIdx = 0;
+            for (auto& bone : *m_resultBones) {
+                if (bone.role == dust3d::BoneRole::Spine) {
+                    bone.name = chainBaseName + "_" + std::to_string(spineIdx);
+                    ++spineIdx;
+                } else if (bone.role == dust3d::BoneRole::SpineReverse) {
+                    bone.name = chainBaseName + "Rev_" + std::to_string(spineIdx);
+                    ++spineIdx;
+                }
+            }
+        }
+    }
+}
+
 void RigGenerator::generate()
 {
     buildNeighborMap();
     buildBoneNodeChain();
     buildSkeleton();
     computeSkinWeights();
+    renameBonesForRigType();
 }
 
 void RigGenerator::process()

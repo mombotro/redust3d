@@ -103,6 +103,8 @@ private:
         std::unordered_set<size_t>* visited);
     void removeBranchsFromNodes(const std::vector<std::vector<size_t>>* boneNodeIndices,
         std::vector<size_t>* resultNodes);
+    std::string humanBoneName(dust3d::BoneRole role, dust3d::BoneSide side, int chainIndex, int boneIndex);
+    void renameBonesForRigType();
 };
 
 #endif

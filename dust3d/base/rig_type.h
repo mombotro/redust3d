@@ -30,6 +30,8 @@ namespace dust3d {
 enum class RigType {
     None = 0,
     Animal,
+    Human,
+    Custom,
     Count
 };
 
