@@ -441,20 +441,41 @@ ComponentPropertyWidget::ComponentPropertyWidget(Document* document,
     QGroupBox* rigGroupBox = nullptr;
     if (nullptr != m_part) {
         dust3d::BoneMark currentMark = dust3d::BoneMark::None;
-        if (!m_part->nodeIds.empty()) {
-            auto* firstNode = m_document->findNode(m_part->nodeIds.front());
-            if (firstNode)
-                currentMark = firstNode->boneMark;
+        bool allSameMark = true;
+        bool firstNode = true;
+        for (const auto& nodeId : m_part->nodeIds) {
+            auto* node = m_document->findNode(nodeId);
+            if (!node)
+                continue;
+            if (firstNode) {
+                currentMark = node->boneMark;
+                firstNode = false;
+            } else if (node->boneMark != currentMark) {
+                allSameMark = false;
+                break;
+            }
         }
 
         auto* boneMarkCombo = new QComboBox;
+        int indexOffset = 0;
+        if (!allSameMark) {
+            boneMarkCombo->addItem(tr("Not Change"));
+            indexOffset = 1;
+        }
         for (int i = 0; i < (int)dust3d::BoneMark::Count; ++i) {
             auto mark = (dust3d::BoneMark)i;
             boneMarkCombo->addItem(QString::fromStdString(dust3d::BoneMarkToDispName(mark)));
         }
-        boneMarkCombo->setCurrentIndex((int)currentMark);
+        if (allSameMark)
+            boneMarkCombo->setCurrentIndex((int)currentMark);
+        else
+            boneMarkCombo->setCurrentIndex(0);
         connect(boneMarkCombo, QOverload<int>::of(&QComboBox::currentIndexChanged), [=](int index) {
-            emit setPartBoneMark(m_partId, (dust3d::BoneMark)index);
+            int markIndex = index - indexOffset;
+            if (markIndex < 0)
+                return;
+            emit setPartBoneMark(m_partId, (dust3d::BoneMark)markIndex);
+            emit groupOperationAdded();
         });
 
         auto* rigLayout = new QFormLayout;
