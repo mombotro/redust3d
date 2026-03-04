@@ -604,6 +604,9 @@ DocumentWindow::DocumentWindow()
     connect(canvasGraphicsWidget, &SkeletonGraphicsWidget::setNodeBoneMarkRequested,
         m_document, &Document::setNodeBoneMark);
 
+    connect(canvasGraphicsWidget, &SkeletonGraphicsWidget::setNodeIsIkEndEffectorRequested,
+        m_document, &Document::setNodeIsIkEndEffector);
+
     connect(m_document, &Document::nodeAdded, canvasGraphicsWidget, &SkeletonGraphicsWidget::nodeAdded);
     connect(m_document, &Document::nodeRemoved, canvasGraphicsWidget, &SkeletonGraphicsWidget::nodeRemoved);
     connect(m_document, &Document::edgeAdded, canvasGraphicsWidget, &SkeletonGraphicsWidget::edgeAdded);

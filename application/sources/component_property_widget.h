@@ -34,6 +34,7 @@ signals:
     void setPartXmirrorState(dust3d::Uuid partId, bool mirrored);
     void setComponentCombineMode(dust3d::Uuid componentId, dust3d::CombineMode combineMode);
     void setPartBoneMark(const dust3d::Uuid& partId, dust3d::BoneMark mark);
+    void setPartIkState(const dust3d::Uuid& partId, bool enabled, float minDegrees, float maxDegrees);
     void groupOperationAdded();
 
 public:

@@ -1651,6 +1651,28 @@ void Document::setNodeBoneMark(dust3d::Uuid nodeId, dust3d::BoneMark mark)
     emit skeletonChanged();
 }
 
+void Document::setPartIkState(const dust3d::Uuid& partId, bool enabled, float minDegrees, float maxDegrees)
+{
+    auto partIt = partMap.find(partId);
+    if (partIt == partMap.end())
+        return;
+    partIt->second.ikEnabled = enabled;
+    partIt->second.ikHingeMinDegrees = minDegrees;
+    partIt->second.ikHingeMaxDegrees = maxDegrees;
+    emit partIkStateChanged(partId);
+    emit skeletonChanged();
+}
+
+void Document::setNodeIsIkEndEffector(const dust3d::Uuid& nodeId, bool isEndEffector)
+{
+    auto nodeIt = nodeMap.find(nodeId);
+    if (nodeIt == nodeMap.end())
+        return;
+    nodeIt->second.isIkEndEffector = isEndEffector;
+    emit nodeIsIkEndEffectorChanged(nodeId);
+    emit skeletonChanged();
+}
+
 void Document::clearNodeCutFaceSettings(dust3d::Uuid nodeId)
 {
     auto node = nodeMap.find(nodeId);
@@ -1801,6 +1823,9 @@ void Document::toSnapshot(dust3d::Snapshot* snapshot, const std::set<dust3d::Uui
                 part["hollowThickness"] = std::to_string(partIt.second.hollowThickness);
             if (!partIt.second.name.isEmpty())
                 part["name"] = partIt.second.name.toUtf8().constData();
+            part["ikEnabled"] = partIt.second.ikEnabled ? "true" : "false";
+            part["ikHingeMinDegrees"] = std::to_string(partIt.second.ikHingeMinDegrees);
+            part["ikHingeMaxDegrees"] = std::to_string(partIt.second.ikHingeMaxDegrees);
             snapshot->parts[part["id"]] = part;
         }
         for (const auto& nodeIt : nodeMap) {
@@ -1825,6 +1850,8 @@ void Document::toSnapshot(dust3d::Snapshot* snapshot, const std::set<dust3d::Uui
             }
             if (nodeIt.second.boneMark != dust3d::BoneMark::None)
                 node["boneMark"] = dust3d::BoneMarkToString(nodeIt.second.boneMark);
+            if (nodeIt.second.isIkEndEffector)
+                node["isIkEndEffector"] = "true";
             if (!nodeIt.second.name.isEmpty())
                 node["name"] = nodeIt.second.name.toUtf8().constData();
             snapshot->nodes[node["id"]] = node;
@@ -1983,6 +2010,9 @@ void Document::addFromSnapshot(const dust3d::Snapshot& snapshot, enum SnapshotSo
         const auto& hollowThicknessIt = partKv.second.find("hollowThickness");
         if (hollowThicknessIt != partKv.second.end())
             part.hollowThickness = dust3d::String::toFloat(hollowThicknessIt->second);
+        part.ikEnabled = dust3d::String::isTrue(dust3d::String::valueOrEmpty(partKv.second, "ikEnabled"));
+        try { part.ikHingeMinDegrees = std::stof(dust3d::String::valueOrEmpty(partKv.second, "ikHingeMinDegrees")); } catch (...) {}
+        try { part.ikHingeMaxDegrees = std::stof(dust3d::String::valueOrEmpty(partKv.second, "ikHingeMaxDegrees")); } catch (...) {}
         newAddedPartIds.insert(part.id);
     }
     for (const auto& it : cutFaceLinkedIdModifyMap) {
@@ -2031,6 +2061,7 @@ void Document::addFromSnapshot(const dust3d::Snapshot& snapshot, enum SnapshotSo
         const auto& boneMarkIt = nodeKv.second.find("boneMark");
         if (boneMarkIt != nodeKv.second.end())
             node.boneMark = dust3d::BoneMarkFromString(boneMarkIt->second.c_str());
+        node.isIkEndEffector = dust3d::String::isTrue(dust3d::String::valueOrEmpty(nodeKv.second, "isIkEndEffector"));
         nodeMap[node.id] = node;
         newAddedNodeIds.insert(node.id);
     }

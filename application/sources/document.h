@@ -80,6 +80,7 @@ public:
         dust3d::Uuid cutFaceLinkedId;
         bool hasCutFaceSettings = false;
         dust3d::BoneMark boneMark = dust3d::BoneMark::None;
+        bool isIkEndEffector = false;
         std::vector<dust3d::Uuid> edgeIds;
 
     private:
@@ -122,6 +123,9 @@ public:
         float metalness;
         float roughness;
         float hollowThickness;
+        bool ikEnabled = false;
+        float ikHingeMinDegrees = -90.0f;
+        float ikHingeMaxDegrees = 90.0f;
         Part(const dust3d::Uuid& withId = dust3d::Uuid());
         void setDeformThickness(float toThickness);
         void setDeformWidth(float toWidth);
@@ -260,6 +264,8 @@ signals:
     void zlockStateChanged();
     void radiusLockStateChanged();
     void rigChanged();
+    void partIkStateChanged(dust3d::Uuid partId);
+    void nodeIsIkEndEffectorChanged(dust3d::Uuid nodeId);
 
 public: // need initialize
     QImage* textureImage = nullptr;
@@ -489,6 +495,8 @@ public slots:
     void setYlockState(bool locked);
     void setZlockState(bool locked);
     void setRadiusLockState(bool locked);
+    void setPartIkState(const dust3d::Uuid& partId, bool enabled, float minDegrees, float maxDegrees);
+    void setNodeIsIkEndEffector(const dust3d::Uuid& nodeId, bool isEndEffector);
 
 private:
     void resolveSnapshotBoundingBox(const dust3d::Snapshot& snapshot, QRectF* mainProfile, QRectF* sideProfile);

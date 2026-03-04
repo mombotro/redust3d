@@ -77,6 +77,7 @@ signals:
     void loadedTurnaroundImageChanged();
     void nodePicked(const dust3d::Uuid& nodeId);
     void setNodeBoneMarkRequested(dust3d::Uuid nodeId, dust3d::BoneMark mark);
+    void setNodeIsIkEndEffectorRequested(dust3d::Uuid nodeId, bool isEndEffector);
 
 public:
     SkeletonGraphicsWidget(const Document* document);

@@ -2,6 +2,7 @@
 #include "cut_face_preview.h"
 #include "float_number_widget.h"
 #include "flow_layout.h"
+#include "int_number_widget.h"
 #include "image_forever.h"
 #include "image_preview_widget.h"
 #include "theme.h"
@@ -484,6 +485,47 @@ ComponentPropertyWidget::ComponentPropertyWidget(Document* document,
         rigGroupBox->setLayout(rigLayout);
     }
 
+    QGroupBox* ikGroupBox = nullptr;
+    if (nullptr != m_part) {
+        auto* ikLayout = new QFormLayout;
+
+        auto* ikEnabledBox = new QCheckBox(tr("Enable IK"));
+        ikEnabledBox->setChecked(m_part->ikEnabled);
+
+        auto* minDegreesSpinBox = new QSpinBox;
+        minDegreesSpinBox->setRange(-180, 0);
+        minDegreesSpinBox->setValue((int)m_part->ikHingeMinDegrees);
+        minDegreesSpinBox->setEnabled(m_part->ikEnabled);
+
+        auto* maxDegreesSpinBox = new QSpinBox;
+        maxDegreesSpinBox->setRange(0, 180);
+        maxDegreesSpinBox->setValue((int)m_part->ikHingeMaxDegrees);
+        maxDegreesSpinBox->setEnabled(m_part->ikEnabled);
+
+        connect(ikEnabledBox, &QCheckBox::toggled, [=](bool checked) {
+            minDegreesSpinBox->setEnabled(checked);
+            maxDegreesSpinBox->setEnabled(checked);
+            emit setPartIkState(m_partId, checked,
+                (float)minDegreesSpinBox->value(),
+                (float)maxDegreesSpinBox->value());
+            emit groupOperationAdded();
+        });
+        auto emitIkState = [=]() {
+            emit setPartIkState(m_partId, ikEnabledBox->isChecked(),
+                (float)minDegreesSpinBox->value(),
+                (float)maxDegreesSpinBox->value());
+            emit groupOperationAdded();
+        };
+        connect(minDegreesSpinBox, QOverload<int>::of(&QSpinBox::valueChanged), emitIkState);
+        connect(maxDegreesSpinBox, QOverload<int>::of(&QSpinBox::valueChanged), emitIkState);
+
+        ikLayout->addRow(ikEnabledBox);
+        ikLayout->addRow(tr("Min angle"), minDegreesSpinBox);
+        ikLayout->addRow(tr("Max angle"), maxDegreesSpinBox);
+        ikGroupBox = new QGroupBox(tr("IK"));
+        ikGroupBox->setLayout(ikLayout);
+    }
+
     QVBoxLayout* mainLayout = new QVBoxLayout;
     mainLayout->addLayout(topLayout);
     if (nullptr != deformGroupBox)
@@ -497,6 +539,8 @@ ComponentPropertyWidget::ComponentPropertyWidget(Document* document,
         mainLayout->addWidget(stitchingLineGroupBox);
     if (nullptr != rigGroupBox)
         mainLayout->addWidget(rigGroupBox);
+    if (nullptr != ikGroupBox)
+        mainLayout->addWidget(ikGroupBox);
     mainLayout->setSizeConstraint(QLayout::SetFixedSize);
 
     connect(this, &ComponentPropertyWidget::setComponentColorState, m_document, &Document::setComponentColorState);
@@ -520,6 +564,7 @@ ComponentPropertyWidget::ComponentPropertyWidget(Document* document,
     connect(this, &ComponentPropertyWidget::setPartXmirrorState, m_document, &Document::setPartXmirrorState);
     connect(this, &ComponentPropertyWidget::setComponentCombineMode, m_document, &Document::setComponentCombineMode);
     connect(this, &ComponentPropertyWidget::setPartBoneMark, m_document, &Document::setPartBoneMark);
+    connect(this, &ComponentPropertyWidget::setPartIkState, m_document, &Document::setPartIkState);
     connect(this, &ComponentPropertyWidget::groupOperationAdded, m_document, &Document::saveSnapshot);
 
     setLayout(mainLayout);

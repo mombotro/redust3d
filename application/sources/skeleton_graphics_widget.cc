@@ -304,6 +304,15 @@ void SkeletonGraphicsWidget::showContextMenu(const QPoint& pos)
                 });
                 boneMarkSubMenu->addAction(act);
             }
+
+            QAction* setIkTargetAction = new QAction(tr("Set as IK Target"), m_contextMenu.get());
+            setIkTargetAction->setCheckable(true);
+            const auto* node = m_document->findNode(nodeId);
+            setIkTargetAction->setChecked(node && node->isIkEndEffector);
+            connect(setIkTargetAction, &QAction::triggered, [=](bool checked) {
+                emit setNodeIsIkEndEffectorRequested(nodeId, checked);
+            });
+            m_contextMenu->addAction(setIkTargetAction);
         }
     }
 
